@@ -20,7 +20,10 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
             Quản lý phân quyền, tạo tài khoản cho nhân viên (Thu ngân, Pha chế, Shipper) và theo dõi lịch sử truy cập.
           </p>
           <div className="flex gap-3 pt-2">
-            <button className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-amber-600 transition-colors">
+            <button 
+              onClick={() => onShowToast?.('Chức năng "Thêm nhân viên mới" đang được phát triển!')}
+              className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-amber-600 transition-colors"
+            >
               <span className="material-symbols-outlined text-[18px]">person_add</span>
               Thêm nhân viên mới
             </button>
@@ -49,7 +52,12 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
                   <td className="p-4 text-stone-600">0987654321</td>
                   <td className="p-4"><span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">Đang làm việc</span></td>
                   <td className="p-4 text-right">
-                    <button className="text-primary font-bold hover:underline">Sửa</button>
+                    <button 
+                      onClick={() => onShowToast?.('Chức năng "Sửa thông tin nhân viên" đang được phát triển!')}
+                      className="text-primary font-bold hover:underline"
+                    >
+                      Sửa
+                    </button>
                   </td>
                 </tr>
                 <tr className="hover:bg-stone-50/50 transition-colors">
@@ -58,7 +66,12 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
                   <td className="p-4 text-stone-600">0912345678</td>
                   <td className="p-4"><span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">Đang làm việc</span></td>
                   <td className="p-4 text-right">
-                    <button className="text-primary font-bold hover:underline">Sửa</button>
+                    <button 
+                      onClick={() => onShowToast?.('Chức năng "Sửa thông tin nhân viên" đang được phát triển!')}
+                      className="text-primary font-bold hover:underline"
+                    >
+                      Sửa
+                    </button>
                   </td>
                 </tr>
                 <tr className="hover:bg-stone-50/50 transition-colors">

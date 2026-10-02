@@ -20,7 +20,10 @@ export const AdminVouchersPage: React.FC<AdminVouchersPageProps> = ({ onNavigate
             Thiết lập các chương trình giảm giá, tặng mã khuyến mãi cho khách hàng và theo dõi hiệu quả chiến dịch.
           </p>
           <div className="flex gap-3 pt-2">
-            <button className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-amber-600 transition-colors">
+            <button 
+              onClick={() => onShowToast?.('Chức năng "Tạo Voucher mới" đang được phát triển!')}
+              className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-amber-600 transition-colors"
+            >
               <span className="material-symbols-outlined text-[18px]">add</span>
               Tạo Voucher mới
             </button>
@@ -39,7 +42,12 @@ export const AdminVouchersPage: React.FC<AdminVouchersPageProps> = ({ onNavigate
             </div>
             <div className="pt-3 border-t border-stone-100 flex justify-between text-xs mt-2">
               <span className="text-stone-500">Đã dùng: <strong className="text-stone-900">142/500</strong></span>
-              <button className="text-primary font-bold hover:underline">Chỉnh sửa</button>
+              <button 
+                onClick={() => onShowToast?.('Chức năng "Chỉnh sửa Voucher" đang được phát triển!')}
+                className="text-primary font-bold hover:underline"
+              >
+                Chỉnh sửa
+              </button>
             </div>
           </div>
           
@@ -54,7 +62,12 @@ export const AdminVouchersPage: React.FC<AdminVouchersPageProps> = ({ onNavigate
             </div>
             <div className="pt-3 border-t border-stone-100 flex justify-between text-xs mt-2">
               <span className="text-stone-500">Đã dùng: <strong className="text-stone-900">890/1000</strong></span>
-              <button className="text-stone-400 font-bold hover:underline">Xem thống kê</button>
+              <button 
+                onClick={() => onShowToast?.('Chức năng "Xem thống kê" đang được phát triển!')}
+                className="text-stone-400 font-bold hover:underline"
+              >
+                Xem thống kê
+              </button>
             </div>
           </div>
         </div>

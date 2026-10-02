@@ -20,11 +20,17 @@ export const AdminPurchasesPage: React.FC<AdminPurchasesPageProps> = ({ onNaviga
             Tạo đơn đặt hàng (PO), theo dõi công nợ nhà cung cấp và lịch sử nhập kho nguyên vật liệu.
           </p>
           <div className="flex gap-3 pt-2">
-            <button className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-amber-600 transition-colors">
+            <button 
+              onClick={() => onShowToast?.('Chức năng "Tạo phiếu nhập" đang được phát triển!')}
+              className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-amber-600 transition-colors"
+            >
               <span className="material-symbols-outlined text-[18px]">add</span>
               Tạo phiếu nhập (PO)
             </button>
-            <button className="px-4 py-2 bg-stone-100 text-stone-700 text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-stone-200 transition-colors">
+            <button 
+              onClick={() => onShowToast?.('Chức năng "Quản lý NCC" đang được phát triển!')}
+              className="px-4 py-2 bg-stone-100 text-stone-700 text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-stone-200 transition-colors"
+            >
               <span className="material-symbols-outlined text-[18px]">store</span>
               Quản lý Nhà cung cấp
             </button>

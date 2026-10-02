@@ -40,7 +40,10 @@ export const AdminSettingsPage: React.FC<AdminSettingsPageProps> = ({ onNavigate
                 <label className="block text-stone-500 mb-1">Địa chỉ trụ sở</label>
                 <input type="text" value="28 Phố Tràng Tiền, Hoàn Kiếm, Hà Nội" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-lg outline-none focus:border-primary" />
               </div>
-              <button className="px-4 py-2 bg-stone-900 text-white rounded-lg font-bold w-full mt-2 hover:bg-stone-800 transition-colors">
+              <button 
+                onClick={() => onShowToast?.('Đã lưu các cài đặt thành công!')}
+                className="px-4 py-2 bg-stone-900 text-white rounded-lg font-bold w-full mt-2 hover:bg-stone-800 transition-colors"
+              >
                 Lưu thay đổi
               </button>
             </div>

@@ -24,11 +24,17 @@ export const AdminOrdersPage: React.FC<AdminOrdersPageProps> = ({ onNavigate, on
               <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-[18px]">search</span>
               <input type="text" placeholder="Tìm theo mã đơn, SĐT khách..." className="w-full pl-9 pr-4 py-2 bg-stone-100 border-none rounded-xl text-xs focus:ring-2 focus:ring-primary/20 outline-none" />
             </div>
-            <button className="px-4 py-2 bg-stone-100 text-stone-700 text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-stone-200 transition-colors">
+            <button 
+              onClick={() => onShowToast?.('Chức năng "Lọc đơn hàng" đang được phát triển!')}
+              className="px-4 py-2 bg-stone-100 text-stone-700 text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-stone-200 transition-colors"
+            >
               <span className="material-symbols-outlined text-[18px]">filter_list</span>
               Lọc
             </button>
-            <button className="px-4 py-2 bg-stone-100 text-stone-700 text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-stone-200 transition-colors">
+            <button 
+              onClick={() => onShowToast?.('Chức năng "Xuất Excel" đang được phát triển!')}
+              className="px-4 py-2 bg-stone-100 text-stone-700 text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-stone-200 transition-colors"
+            >
               <span className="material-symbols-outlined text-[18px]">download</span>
               Xuất Excel
             </button>
