@@ -28,7 +28,12 @@ export type PageRoute =
   | 'admin-categories'
   | 'admin-products'
   | 'admin-stock'
-  | 'admin-ingredients';
+  | 'admin-ingredients'
+  | 'admin-users'
+  | 'admin-orders'
+  | 'admin-vouchers'
+  | 'admin-purchases'
+  | 'admin-settings';
 
 export interface Product {
   id: string;

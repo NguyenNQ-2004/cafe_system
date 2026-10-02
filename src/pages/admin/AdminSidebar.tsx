@@ -98,6 +98,71 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ currentRoute, onNavi
               <span className="material-symbols-outlined text-[18px]">science</span>
               <span>24. Định mức nguyên liệu</span>
             </button>
+            <button
+              onClick={() => onNavigate('admin-purchases')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${
+                currentRoute === 'admin-purchases'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">shopping_cart</span>
+              <span>25. Nhập hàng & NCC</span>
+            </button>
+          </div>
+
+          {/* Section 4: Kinh Doanh & Marketing */}
+          <div className="space-y-1">
+            <p className="px-2 text-[10px] text-stone-400 uppercase tracking-wider font-bold">Kinh Doanh & Marketing</p>
+            <button
+              onClick={() => onNavigate('admin-orders')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${
+                currentRoute === 'admin-orders'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+              <span>26. Quản lý Đơn hàng</span>
+            </button>
+            <button
+              onClick={() => onNavigate('admin-vouchers')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${
+                currentRoute === 'admin-vouchers'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">local_offer</span>
+              <span>27. Khuyến mãi & Voucher</span>
+            </button>
+          </div>
+
+          {/* Section 5: Nhân Sự & Hệ Thống */}
+          <div className="space-y-1">
+            <p className="px-2 text-[10px] text-stone-400 uppercase tracking-wider font-bold">Nhân Sự & Cấu Hình</p>
+            <button
+              onClick={() => onNavigate('admin-users')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${
+                currentRoute === 'admin-users'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">group</span>
+              <span>28. Quản lý Tài khoản</span>
+            </button>
+            <button
+              onClick={() => onNavigate('admin-settings')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${
+                currentRoute === 'admin-settings'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+              }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">settings</span>
+              <span>29. Cài đặt Cửa hàng</span>
+            </button>
           </div>
         </nav>
       </div>
