@@ -1,0 +1,6 @@
+{
+  "name": "Aura Café - Specialty Coffee & Roastery",
+  "description": "Hệ thống cà phê đặc sản Aura Café: Thực đơn tuyển chọn, đặt giao hàng nhanh, tích luỹ hội viên Aura Rewards và quản lý đơn hàng thời gian thực.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
