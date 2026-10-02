@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PageRoute } from '../../types';
+import { PageRoute, DbUser } from '../../types';
 import { AdminSidebar } from './AdminSidebar';
 
 interface AdminUsersPageProps {
@@ -9,7 +9,7 @@ interface AdminUsersPageProps {
 
 export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onShowToast }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState<any>(null);
+  const [editingUser, setEditingUser] = useState<Partial<DbUser> | null>(null);
 
   const handleOpenModal = (user: any = null) => {
     setEditingUser(user);
@@ -62,7 +62,7 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
                   <td className="p-4 text-stone-600">0987654321</td>
                   <td className="p-4"><span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">Đang làm việc</span></td>
                   <td className="p-4 text-right">
-                    <button onClick={() => handleOpenModal({ name: 'Nguyễn Văn A', role: 'Thu ngân', phone: '0987654321' })} className="text-primary font-bold hover:underline">Sửa</button>
+                    <button onClick={() => handleOpenModal({ full_name: 'Nguyễn Văn A', role: 'CASHIER', phone: '0987654321' })} className="text-primary font-bold hover:underline">Sửa</button>
                   </td>
                 </tr>
                 <tr className="hover:bg-stone-50/50 transition-colors">
@@ -71,7 +71,7 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
                   <td className="p-4 text-stone-600">0912345678</td>
                   <td className="p-4"><span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">Đang làm việc</span></td>
                   <td className="p-4 text-right">
-                    <button onClick={() => handleOpenModal({ name: 'Trần Thị B', role: 'Pha chế', phone: '0912345678' })} className="text-primary font-bold hover:underline">Sửa</button>
+                    <button onClick={() => handleOpenModal({ full_name: 'Trần Thị B', role: 'BARISTA', phone: '0912345678' })} className="text-primary font-bold hover:underline">Sửa</button>
                   </td>
                 </tr>
                 <tr className="hover:bg-stone-50/50 transition-colors">
@@ -80,7 +80,7 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
                   <td className="p-4 text-stone-600">0909090909</td>
                   <td className="p-4"><span className="px-2 py-1 bg-stone-100 text-stone-500 rounded text-[10px] font-bold">Nghỉ phép</span></td>
                   <td className="p-4 text-right">
-                    <button onClick={() => handleOpenModal({ name: 'Lê Văn C', role: 'Shipper', phone: '0909090909' })} className="text-primary font-bold hover:underline">Sửa</button>
+                    <button onClick={() => handleOpenModal({ full_name: 'Lê Văn C', role: 'DELIVERY_STAFF', phone: '0909090909' })} className="text-primary font-bold hover:underline">Sửa</button>
                   </td>
                 </tr>
               </tbody>
@@ -105,7 +105,7 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
             <form onSubmit={handleSave} className="p-5 space-y-4 overflow-y-auto">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-stone-600">Họ và tên</label>
-                <input required defaultValue={editingUser?.name} type="text" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" placeholder="VD: Nguyễn Văn A" />
+                <input required defaultValue={editingUser?.full_name} type="text" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" placeholder="VD: Nguyễn Văn A" />
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-stone-600">Số điện thoại (Tài khoản đăng nhập)</label>
@@ -117,11 +117,12 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-stone-600">Chức vụ / Phân quyền</label>
-                <select className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm">
-                  <option>Thu ngân (POS)</option>
-                  <option>Pha chế (KDS)</option>
-                  <option>Giao hàng (Shipper)</option>
-                  <option>Quản lý (Admin)</option>
+                <select defaultValue={editingUser?.role} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm">
+                  <option value="CASHIER">Thu ngân (POS)</option>
+                  <option value="BARISTA">Pha chế (KDS)</option>
+                  <option value="DELIVERY_STAFF">Giao hàng (Shipper)</option>
+                  <option value="ADMIN">Quản lý (Admin)</option>
+                  <option value="STAFF">Nhân viên (Staff)</option>
                 </select>
               </div>
               

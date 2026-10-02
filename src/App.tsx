@@ -43,6 +43,9 @@ import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
 import { AdminStockPage } from './pages/admin/AdminStockPage';
 import { AdminIngredientsPage } from './pages/admin/AdminIngredientsPage';
+import { AdminAttendancePage } from './pages/admin/AdminAttendancePage';
+import { AdminUsersPage } from './pages/admin/AdminUsersPage';
+import { AdminVouchersPage } from './pages/admin/AdminVouchersPage';
 
 export default function App() {
   const [currentRoute, setCurrentRoute] = useState<PageRoute>('home');
@@ -223,6 +226,9 @@ export default function App() {
       { route: 'admin-products', label: 'Quản lý Món & Giá niêm yết', tag: 'Page 22', icon: 'local_cafe', role: 'admin' },
       { route: 'admin-stock', label: 'Tổng quan tồn kho chi nhánh', tag: 'Page 23', icon: 'inventory_2', role: 'admin' },
       { route: 'admin-ingredients', label: 'Quản lý nguyên liệu & NCC', tag: 'Page 24', icon: 'shelves', role: 'admin' },
+      { route: 'admin-users', label: 'Danh sách nhân sự', tag: 'Page 25', icon: 'group', role: 'admin' },
+      { route: 'admin-attendance', label: 'Nhân sự & Chấm công', tag: 'Page 26', icon: 'badge', role: 'admin' },
+      { route: 'admin-vouchers', label: 'Khuyến mãi & Voucher', tag: 'Page 27', icon: 'local_offer', role: 'admin' },
     ];
 
   const filteredScreens = allScreens.filter(
@@ -402,6 +408,24 @@ export default function App() {
         )}
         {currentRoute === 'admin-ingredients' && (
           <AdminIngredientsPage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
+          />
+        )}
+        {currentRoute === 'admin-attendance' && (
+          <AdminAttendancePage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
+          />
+        )}
+        {currentRoute === 'admin-users' && (
+          <AdminUsersPage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
+          />
+        )}
+        {currentRoute === 'admin-vouchers' && (
+          <AdminVouchersPage
             onNavigate={handleNavigate}
             onShowToast={showToast}
           />

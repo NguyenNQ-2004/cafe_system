@@ -94,6 +94,31 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ currentRoute, onNavi
               <span>24. Định mức nguyên liệu</span>
             </button>
           </div>
+
+          {/* Section 4: Nhân Sự & Ca Làm */}
+          <div className="space-y-1">
+            <p className="px-2 text-[10px] text-stone-400 uppercase tracking-wider font-bold">Nhân Sự & Ca Làm</p>
+            <button
+              onClick={() => onNavigate('admin-users')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${currentRoute === 'admin-users'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">group</span>
+              <span>25. Danh sách nhân sự</span>
+            </button>
+            <button
+              onClick={() => onNavigate('admin-attendance')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${currentRoute === 'admin-attendance'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">badge</span>
+              <span>26. Phân ca & Chấm công</span>
+            </button>
+          </div>
         </nav>
       </div>
 

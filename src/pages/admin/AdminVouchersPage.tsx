@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { PageRoute } from '../../types';
+import { PageRoute, DbVoucher } from '../../types';
 import { AdminSidebar } from './AdminSidebar';
 
 interface AdminVouchersPageProps {
@@ -9,7 +9,7 @@ interface AdminVouchersPageProps {
 
 export const AdminVouchersPage: React.FC<AdminVouchersPageProps> = ({ onNavigate, onShowToast }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingVoucher, setEditingVoucher] = useState<any>(null);
+  const [editingVoucher, setEditingVoucher] = useState<Partial<DbVoucher> | null>(null);
 
   const handleOpenModal = (voucher: any = null) => {
     setEditingVoucher(voucher);
@@ -53,7 +53,7 @@ export const AdminVouchersPage: React.FC<AdminVouchersPageProps> = ({ onNavigate
             </div>
             <div className="pt-3 border-t border-stone-100 flex justify-between text-xs mt-2">
               <span className="text-stone-500">Đã dùng: <strong className="text-stone-900">142/500</strong></span>
-              <button onClick={() => handleOpenModal({ code: 'AURAFREESHIP', desc: 'Miễn phí giao hàng đơn từ 150k' })} className="text-primary font-bold hover:underline">Chỉnh sửa</button>
+              <button onClick={() => handleOpenModal({ code: 'AURAFREESHIP', description: 'Giảm 15k phí ship', discount_type: 'FIXED', discount_value: 15000 })} className="text-primary font-bold hover:underline">Chỉnh sửa</button>
             </div>
           </div>
 
@@ -94,26 +94,25 @@ export const AdminVouchersPage: React.FC<AdminVouchersPageProps> = ({ onNavigate
               </div>
               <div className="space-y-1">
                 <label className="text-xs font-bold text-stone-600">Mô tả chương trình</label>
-                <input required defaultValue={editingVoucher?.desc} type="text" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" placeholder="VD: Giảm 20% cho đơn từ 100k" />
+                <input required defaultValue={editingVoucher?.description} type="text" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" placeholder="VD: Giảm 20% cho đơn từ 100k" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-stone-600">Loại giảm giá</label>
-                  <select className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm">
-                    <option>Phần trăm (%)</option>
-                    <option>Số tiền (VNĐ)</option>
-                    <option>Miễn phí vận chuyển</option>
+                  <select defaultValue={editingVoucher?.discount_type} className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm">
+                    <option value="PERCENT">Phần trăm (%)</option>
+                    <option value="FIXED">Số tiền (VNĐ)</option>
                   </select>
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-stone-600">Mức giảm</label>
-                  <input required type="number" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" placeholder="20" />
+                  <input required defaultValue={editingVoucher?.discount_value} type="number" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" placeholder="20" />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-stone-600">Số lượng giới hạn</label>
-                  <input type="number" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" placeholder="500" />
+                  <input defaultValue={editingVoucher?.usage_limit} type="number" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" placeholder="500" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-stone-600">Ngày hết hạn</label>
