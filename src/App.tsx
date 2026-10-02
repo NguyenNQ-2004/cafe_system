@@ -43,11 +43,6 @@ import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
 import { AdminStockPage } from './pages/admin/AdminStockPage';
 import { AdminIngredientsPage } from './pages/admin/AdminIngredientsPage';
-import { AdminPurchasesPage } from './pages/admin/AdminPurchasesPage';
-import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
-import { AdminVouchersPage } from './pages/admin/AdminVouchersPage';
-import { AdminUsersPage } from './pages/admin/AdminUsersPage';
-import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 
 export default function App() {
   const [currentRoute, setCurrentRoute] = useState<PageRoute>('home');
@@ -188,7 +183,7 @@ export default function App() {
     'home', 'menu', 'customize', 'cart', 'checkout', 'payment', 'orders', 'profile', 'feedback'
   ].includes(currentRoute);
 
-  // All 28 Screens organized by System Module
+  // All 23 Screens organized by System Module
   const allScreens: {
     route: PageRoute;
     label: string;
@@ -228,11 +223,6 @@ export default function App() {
       { route: 'admin-products', label: 'Quản lý Món & Giá niêm yết', tag: 'Page 22', icon: 'local_cafe', role: 'admin' },
       { route: 'admin-stock', label: 'Tổng quan tồn kho chi nhánh', tag: 'Page 23', icon: 'inventory_2', role: 'admin' },
       { route: 'admin-ingredients', label: 'Quản lý nguyên liệu & NCC', tag: 'Page 24', icon: 'shelves', role: 'admin' },
-      { route: 'admin-purchases', label: 'Nhập hàng & Nhà cung cấp', tag: 'Page 25', icon: 'shopping_cart', role: 'admin' },
-      { route: 'admin-orders', label: 'Quản lý Đơn hàng hệ thống', tag: 'Page 26', icon: 'receipt_long', role: 'admin' },
-      { route: 'admin-vouchers', label: 'Khuyến mãi & Vouchers', tag: 'Page 27', icon: 'local_offer', role: 'admin' },
-      { route: 'admin-users', label: 'Quản lý Tài khoản & HR', tag: 'Page 28', icon: 'group', role: 'admin' },
-      { route: 'admin-settings', label: 'Cài đặt Cửa hàng & Hệ thống', tag: 'Page 29', icon: 'settings', role: 'admin' },
     ];
 
   const filteredScreens = allScreens.filter(
@@ -416,36 +406,6 @@ export default function App() {
             onShowToast={showToast}
           />
         )}
-        {currentRoute === 'admin-purchases' && (
-          <AdminPurchasesPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-orders' && (
-          <AdminOrdersPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-vouchers' && (
-          <AdminVouchersPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-users' && (
-          <AdminUsersPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-settings' && (
-          <AdminSettingsPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
       </main>
 
       {/* Consumer Footer only shown on customer routes */}
@@ -468,14 +428,14 @@ export default function App() {
         orderId="#AUR-89241"
       />
 
-      {/* Floating System Switcher (Allows instant switching to any of the 28 screens across all 5 roles) */}
+      {/* Floating System Switcher (Allows instant switching to any of the 23 screens across all 5 roles) */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
         {isScreenNavOpen && (
           <div className="mb-3 w-88 sm:w-96 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-stone-200 p-3.5 animate-in fade-in slide-in-from-bottom-5 duration-200">
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-stone-100">
               <span className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-primary" />
-                Hệ Thống Aura Café (28 Màn hình)
+                Hệ Thống Aura Café (23 Màn hình)
               </span>
               <button
                 onClick={() => setIsScreenNavOpen(false)}
@@ -488,7 +448,7 @@ export default function App() {
             {/* Role Filter Tabs */}
             <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-2 text-[11px] font-semibold border-b border-stone-100">
               {[
-                { id: 'all', label: 'Tất cả (28)' },
+                { id: 'all', label: 'Tất cả (23)' },
                 { id: 'customer', label: 'Khách hàng' },
                 { id: 'pos', label: 'Thu ngân' },
                 { id: 'kds', label: 'Barista' },
@@ -551,7 +511,7 @@ export default function App() {
           <span className="material-symbols-outlined text-amber-400 group-hover:rotate-45 transition-transform text-[20px]">
             grid_view
           </span>
-          <span className="text-xs font-bold">Chuyển Phân Hệ (28 Màn hình)</span>
+          <span className="text-xs font-bold">Chuyển Phân Hệ (23 Màn hình)</span>
         </button>
       </div>
 

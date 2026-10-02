@@ -1,15 +1,15 @@
 export type AppModule = 'customer' | 'pos' | 'kds' | 'delivery' | 'admin';
 
-export type PageRoute = 
+export type PageRoute =
   // Khách hàng
-  | 'home' 
-  | 'menu' 
-  | 'customize' 
-  | 'cart' 
-  | 'checkout' 
-  | 'payment' 
-  | 'orders' 
-  | 'profile' 
+  | 'home'
+  | 'menu'
+  | 'customize'
+  | 'cart'
+  | 'checkout'
+  | 'payment'
+  | 'orders'
+  | 'profile'
   | 'feedback'
   // POS Thu ngân
   | 'pos-create'
@@ -28,12 +28,7 @@ export type PageRoute =
   | 'admin-categories'
   | 'admin-products'
   | 'admin-stock'
-  | 'admin-ingredients'
-  | 'admin-users'
-  | 'admin-orders'
-  | 'admin-vouchers'
-  | 'admin-purchases'
-  | 'admin-settings';
+  | 'admin-ingredients';
 
 export interface Product {
   id: string;
