@@ -188,7 +188,7 @@ export default function App() {
     'home', 'menu', 'customize', 'cart', 'checkout', 'payment', 'orders', 'profile', 'feedback'
   ].includes(currentRoute);
 
-  // All 23 Screens organized by System Module
+  // All 28 Screens organized by System Module
   const allScreens: {
     route: PageRoute;
     label: string;
@@ -468,14 +468,14 @@ export default function App() {
         orderId="#AUR-89241"
       />
 
-      {/* Floating System Switcher (Allows instant switching to any of the 23 screens across all 5 roles) */}
+      {/* Floating System Switcher (Allows instant switching to any of the 28 screens across all 5 roles) */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
         {isScreenNavOpen && (
           <div className="mb-3 w-88 sm:w-96 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-stone-200 p-3.5 animate-in fade-in slide-in-from-bottom-5 duration-200">
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-stone-100">
               <span className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-primary" />
-                Hệ Thống Aura Café (23 Màn hình)
+                Hệ Thống Aura Café (28 Màn hình)
               </span>
               <button
                 onClick={() => setIsScreenNavOpen(false)}
@@ -488,7 +488,7 @@ export default function App() {
             {/* Role Filter Tabs */}
             <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-2 text-[11px] font-semibold border-b border-stone-100">
               {[
-                { id: 'all', label: 'Tất cả (23)' },
+                { id: 'all', label: 'Tất cả (28)' },
                 { id: 'customer', label: 'Khách hàng' },
                 { id: 'pos', label: 'Thu ngân' },
                 { id: 'kds', label: 'Barista' },
@@ -554,7 +554,7 @@ export default function App() {
           <span className="material-symbols-outlined text-amber-400 group-hover:rotate-45 transition-transform text-[20px]">
             grid_view
           </span>
-          <span className="text-xs font-bold">Chuyển Phân Hệ (23 Màn hình)</span>
+          <span className="text-xs font-bold">Chuyển Phân Hệ (28 Màn hình)</span>
         </button>
       </div>
 
