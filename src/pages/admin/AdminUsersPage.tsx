@@ -8,20 +8,30 @@ interface AdminUsersPageProps {
 }
 
 export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onShowToast }) => {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any>(null);
+
+  const handleOpenModal = (user: any = null) => {
+    setEditingUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsModalOpen(false);
+    onShowToast?.(editingUser ? 'Cập nhật nhân viên thành công!' : 'Đã thêm nhân viên mới!');
+  };
+
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col lg:flex-row pb-12">
       <AdminSidebar currentRoute="admin-users" onNavigate={onNavigate} onShowToast={onShowToast} />
-      <main className="flex-1 p-4 sm:p-6 space-y-4 max-w-7xl">
+      <main className="flex-1 p-4 sm:p-6 space-y-4 max-w-7xl relative">
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
-            Quản lý Tài khoản & Nhân sự
-          </h1>
-          <p className="text-xs text-stone-500">
-            Quản lý phân quyền, tạo tài khoản cho nhân viên (Thu ngân, Pha chế, Shipper) và theo dõi lịch sử truy cập.
-          </p>
+          <h1 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">Quản lý Tài khoản & Nhân sự</h1>
+          <p className="text-xs text-stone-500">Quản lý phân quyền, tạo tài khoản cho nhân viên (Thu ngân, Pha chế, Shipper) và theo dõi lịch sử truy cập.</p>
           <div className="flex gap-3 pt-2">
             <button 
-              onClick={() => onShowToast?.('Chức năng "Thêm nhân viên mới" đang được phát triển!')}
+              onClick={() => handleOpenModal()}
               className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-amber-600 transition-colors"
             >
               <span className="material-symbols-outlined text-[18px]">person_add</span>
@@ -52,12 +62,7 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
                   <td className="p-4 text-stone-600">0987654321</td>
                   <td className="p-4"><span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">Đang làm việc</span></td>
                   <td className="p-4 text-right">
-                    <button 
-                      onClick={() => onShowToast?.('Chức năng "Sửa thông tin nhân viên" đang được phát triển!')}
-                      className="text-primary font-bold hover:underline"
-                    >
-                      Sửa
-                    </button>
+                    <button onClick={() => handleOpenModal({ name: 'Nguyễn Văn A', role: 'Thu ngân', phone: '0987654321' })} className="text-primary font-bold hover:underline">Sửa</button>
                   </td>
                 </tr>
                 <tr className="hover:bg-stone-50/50 transition-colors">
@@ -66,12 +71,7 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
                   <td className="p-4 text-stone-600">0912345678</td>
                   <td className="p-4"><span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded text-[10px] font-bold">Đang làm việc</span></td>
                   <td className="p-4 text-right">
-                    <button 
-                      onClick={() => onShowToast?.('Chức năng "Sửa thông tin nhân viên" đang được phát triển!')}
-                      className="text-primary font-bold hover:underline"
-                    >
-                      Sửa
-                    </button>
+                    <button onClick={() => handleOpenModal({ name: 'Trần Thị B', role: 'Pha chế', phone: '0912345678' })} className="text-primary font-bold hover:underline">Sửa</button>
                   </td>
                 </tr>
                 <tr className="hover:bg-stone-50/50 transition-colors">
@@ -80,7 +80,7 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
                   <td className="p-4 text-stone-600">0909090909</td>
                   <td className="p-4"><span className="px-2 py-1 bg-stone-100 text-stone-500 rounded text-[10px] font-bold">Nghỉ phép</span></td>
                   <td className="p-4 text-right">
-                    <button className="text-primary font-bold hover:underline">Sửa</button>
+                    <button onClick={() => handleOpenModal({ name: 'Lê Văn C', role: 'Shipper', phone: '0909090909' })} className="text-primary font-bold hover:underline">Sửa</button>
                   </td>
                 </tr>
               </tbody>
@@ -88,6 +88,55 @@ export const AdminUsersPage: React.FC<AdminUsersPageProps> = ({ onNavigate, onSh
           </div>
         </div>
       </main>
+
+      {/* Modal Nhân viên */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-stone-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="flex justify-between items-center p-4 border-b border-stone-100 bg-stone-50">
+              <h3 className="font-bold text-stone-900 text-sm">
+                {editingUser ? 'Chỉnh sửa nhân viên' : 'Thêm nhân viên mới'}
+              </h3>
+              <button onClick={() => setIsModalOpen(false)} className="text-stone-400 hover:text-stone-700">
+                <span className="material-symbols-outlined text-[20px]">close</span>
+              </button>
+            </div>
+            
+            <form onSubmit={handleSave} className="p-5 space-y-4 overflow-y-auto">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-stone-600">Họ và tên</label>
+                <input required defaultValue={editingUser?.name} type="text" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" placeholder="VD: Nguyễn Văn A" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-stone-600">Số điện thoại (Tài khoản đăng nhập)</label>
+                <input required defaultValue={editingUser?.phone} type="tel" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" placeholder="VD: 0987654321" />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-stone-600">Mật khẩu</label>
+                <input required={!editingUser} type="password" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" placeholder={editingUser ? "(Bỏ trống nếu không đổi)" : "Nhập mật khẩu"} />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-stone-600">Chức vụ / Phân quyền</label>
+                <select className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm">
+                  <option>Thu ngân (POS)</option>
+                  <option>Pha chế (KDS)</option>
+                  <option>Giao hàng (Shipper)</option>
+                  <option>Quản lý (Admin)</option>
+                </select>
+              </div>
+              
+              <div className="pt-4 flex gap-3">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2.5 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs hover:bg-stone-200">
+                  Hủy bỏ
+                </button>
+                <button type="submit" className="flex-1 px-4 py-2.5 bg-primary text-white font-bold rounded-xl text-xs hover:bg-amber-600">
+                  {editingUser ? 'Lưu thay đổi' : 'Tạo tài khoản'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

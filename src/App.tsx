@@ -196,44 +196,44 @@ export default function App() {
     icon: string;
     role: 'customer' | 'pos' | 'kds' | 'delivery' | 'admin';
   }[] = [
-    // 1. Khách hàng
-    { route: 'home', label: 'Trang chủ Aura Café', tag: 'Page 6', icon: 'storefront', role: 'customer' },
-    { route: 'menu', label: 'Menu & Đồ uống', tag: 'Page 1', icon: 'menu_book', role: 'customer' },
-    { route: 'customize', label: 'Chi tiết & Custom món', tag: 'Page 9', icon: 'tune', role: 'customer' },
-    { route: 'cart', label: 'Giỏ hàng của bạn', tag: 'Page 8', icon: 'shopping_bag', role: 'customer' },
-    { route: 'checkout', label: 'Xác nhận đơn & Địa chỉ', tag: 'Page 4', icon: 'local_shipping', role: 'customer' },
-    { route: 'payment', label: 'Thanh toán & VietQR', tag: 'Page 7', icon: 'qr_code_2', role: 'customer' },
-    { route: 'orders', label: 'Theo dõi đơn hàng', tag: 'Page 5', icon: 'moped', role: 'customer' },
-    { route: 'profile', label: 'Aura Rewards & VIP', tag: 'Page 2', icon: 'workspace_premium', role: 'customer' },
-    { route: 'feedback', label: 'Khiếu nại & Góp ý', tag: 'Page 3', icon: 'rate_review', role: 'customer' },
+      // 1. Khách hàng
+      { route: 'home', label: 'Trang chủ Aura Café', tag: 'Page 6', icon: 'storefront', role: 'customer' },
+      { route: 'menu', label: 'Menu & Đồ uống', tag: 'Page 1', icon: 'menu_book', role: 'customer' },
+      { route: 'customize', label: 'Chi tiết & Custom món', tag: 'Page 9', icon: 'tune', role: 'customer' },
+      { route: 'cart', label: 'Giỏ hàng của bạn', tag: 'Page 8', icon: 'shopping_bag', role: 'customer' },
+      { route: 'checkout', label: 'Xác nhận đơn & Địa chỉ', tag: 'Page 4', icon: 'local_shipping', role: 'customer' },
+      { route: 'payment', label: 'Thanh toán & VietQR', tag: 'Page 7', icon: 'qr_code_2', role: 'customer' },
+      { route: 'orders', label: 'Theo dõi đơn hàng', tag: 'Page 5', icon: 'moped', role: 'customer' },
+      { route: 'profile', label: 'Aura Rewards & VIP', tag: 'Page 2', icon: 'workspace_premium', role: 'customer' },
+      { route: 'feedback', label: 'Khiếu nại & Góp ý', tag: 'Page 3', icon: 'rate_review', role: 'customer' },
 
-    // 2. Thu ngân POS
-    { route: 'pos-create', label: 'Tạo đơn quầy & Khách', tag: 'Page 11', icon: 'point_of_sale', role: 'pos' },
-    { route: 'pos-orders', label: 'Quản lý đơn quầy POS', tag: 'Page 12', icon: 'receipt_long', role: 'pos' },
-    { route: 'pos-shift', label: 'Quản lý ca & Đối soát két', tag: 'Page 13', icon: 'savings', role: 'pos' },
-    { route: 'pos-handover', label: 'Biên bản bàn giao ca', tag: 'Page 14', icon: 'assignment_turned_in', role: 'pos' },
+      // 2. Thu ngân POS
+      { route: 'pos-create', label: 'Tạo đơn quầy & Khách', tag: 'Page 11', icon: 'point_of_sale', role: 'pos' },
+      { route: 'pos-orders', label: 'Quản lý đơn quầy POS', tag: 'Page 12', icon: 'receipt_long', role: 'pos' },
+      { route: 'pos-shift', label: 'Quản lý ca & Đối soát két', tag: 'Page 13', icon: 'savings', role: 'pos' },
+      { route: 'pos-handover', label: 'Biên bản bàn giao ca', tag: 'Page 14', icon: 'assignment_turned_in', role: 'pos' },
 
-    // 3. Barista KDS
-    { route: 'kds-terminal', label: 'Màn hình Barista KDS', tag: 'Page 15', icon: 'blender', role: 'kds' },
-    { route: 'kds-recipe', label: 'Sổ tay công thức SOP', tag: 'Page 16', icon: 'science', role: 'kds' },
+      // 3. Barista KDS
+      { route: 'kds-terminal', label: 'Màn hình Barista KDS', tag: 'Page 15', icon: 'blender', role: 'kds' },
+      { route: 'kds-recipe', label: 'Sổ tay công thức SOP', tag: 'Page 16', icon: 'science', role: 'kds' },
 
-    // 4. Đội giao hàng Delivery
-    { route: 'delivery-orders', label: 'Đơn được phân công & GPS', tag: 'Page 17', icon: 'directions_bike', role: 'delivery' },
-    { route: 'delivery-report', label: 'Báo cáo sự cố đơn hàng', tag: 'Page 18', icon: 'report_problem', role: 'delivery' },
-    { route: 'delivery-cod', label: 'Đối soát COD & Chốt ca', tag: 'Page 19', icon: 'payments', role: 'delivery' },
+      // 4. Đội giao hàng Delivery
+      { route: 'delivery-orders', label: 'Đơn được phân công & GPS', tag: 'Page 17', icon: 'directions_bike', role: 'delivery' },
+      { route: 'delivery-report', label: 'Báo cáo sự cố đơn hàng', tag: 'Page 18', icon: 'report_problem', role: 'delivery' },
+      { route: 'delivery-cod', label: 'Đối soát COD & Chốt ca', tag: 'Page 19', icon: 'payments', role: 'delivery' },
 
-    // 5. Quản trị chuỗi Admin ERP
-    { route: 'admin-overview', label: 'Tổng quan điều hành chuỗi', tag: 'Page 20', icon: 'dashboard', role: 'admin' },
-    { route: 'admin-categories', label: 'Quản trị danh mục thực đơn', tag: 'Page 21', icon: 'category', role: 'admin' },
-    { route: 'admin-products', label: 'Quản lý Món & Giá niêm yết', tag: 'Page 22', icon: 'local_cafe', role: 'admin' },
-    { route: 'admin-stock', label: 'Tổng quan tồn kho chi nhánh', tag: 'Page 23', icon: 'inventory_2', role: 'admin' },
-    { route: 'admin-ingredients', label: 'Quản lý nguyên liệu & NCC', tag: 'Page 24', icon: 'shelves', role: 'admin' },
-    { route: 'admin-purchases', label: 'Nhập hàng & Nhà cung cấp', tag: 'Page 25', icon: 'shopping_cart', role: 'admin' },
-    { route: 'admin-orders', label: 'Quản lý Đơn hàng hệ thống', tag: 'Page 26', icon: 'receipt_long', role: 'admin' },
-    { route: 'admin-vouchers', label: 'Khuyến mãi & Vouchers', tag: 'Page 27', icon: 'local_offer', role: 'admin' },
-    { route: 'admin-users', label: 'Quản lý Tài khoản & HR', tag: 'Page 28', icon: 'group', role: 'admin' },
-    { route: 'admin-settings', label: 'Cài đặt Cửa hàng & Hệ thống', tag: 'Page 29', icon: 'settings', role: 'admin' },
-  ];
+      // 5. Quản trị chuỗi Admin ERP
+      { route: 'admin-overview', label: 'Tổng quan điều hành chuỗi', tag: 'Page 20', icon: 'dashboard', role: 'admin' },
+      { route: 'admin-categories', label: 'Quản trị danh mục thực đơn', tag: 'Page 21', icon: 'category', role: 'admin' },
+      { route: 'admin-products', label: 'Quản lý Món & Giá niêm yết', tag: 'Page 22', icon: 'local_cafe', role: 'admin' },
+      { route: 'admin-stock', label: 'Tổng quan tồn kho chi nhánh', tag: 'Page 23', icon: 'inventory_2', role: 'admin' },
+      { route: 'admin-ingredients', label: 'Quản lý nguyên liệu & NCC', tag: 'Page 24', icon: 'shelves', role: 'admin' },
+      { route: 'admin-purchases', label: 'Nhập hàng & Nhà cung cấp', tag: 'Page 25', icon: 'shopping_cart', role: 'admin' },
+      { route: 'admin-orders', label: 'Quản lý Đơn hàng hệ thống', tag: 'Page 26', icon: 'receipt_long', role: 'admin' },
+      { route: 'admin-vouchers', label: 'Khuyến mãi & Vouchers', tag: 'Page 27', icon: 'local_offer', role: 'admin' },
+      { route: 'admin-users', label: 'Quản lý Tài khoản & HR', tag: 'Page 28', icon: 'group', role: 'admin' },
+      { route: 'admin-settings', label: 'Cài đặt Cửa hàng & Hệ thống', tag: 'Page 29', icon: 'settings', role: 'admin' },
+    ];
 
   const filteredScreens = allScreens.filter(
     s => navRoleFilter === 'all' || s.role === navRoleFilter
@@ -498,11 +498,10 @@ export default function App() {
                 <button
                   key={f.id}
                   onClick={() => setNavRoleFilter(f.id as any)}
-                  className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition-colors ${
-                    navRoleFilter === f.id
+                  className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition-colors ${navRoleFilter === f.id
                       ? 'bg-primary text-white shadow-2xs'
                       : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                  }`}
+                    }`}
                 >
                   {f.label}
                 </button>
@@ -520,22 +519,20 @@ export default function App() {
                       handleNavigate(s.route);
                       setIsScreenNavOpen(false);
                     }}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition-all ${
-                      isActive
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition-all ${isActive
                         ? 'bg-primary text-white font-bold shadow-xs'
                         : 'hover:bg-stone-100 text-stone-700'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2 truncate">
                       <span className="material-symbols-outlined text-[16px] shrink-0">{s.icon}</span>
                       <span className="truncate">{s.label}</span>
                     </div>
                     <span
-                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0 ml-2 ${
-                        isActive
+                      className={`text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0 ml-2 ${isActive
                           ? 'bg-white/20 text-white'
                           : 'bg-stone-200/70 text-stone-500'
-                      }`}
+                        }`}
                     >
                       {s.tag}
                     </span>
@@ -563,7 +560,7 @@ export default function App() {
         <div className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-stone-900/90 text-white backdrop-blur-md px-5 py-3 rounded-full shadow-2xl flex items-center gap-3 border border-stone-700 animate-in fade-in slide-in-from-top-4 duration-300">
           <span className="material-symbols-outlined text-emerald-400 text-[18px]">check_circle</span>
           <span className="text-xs sm:text-sm font-medium">{toastMessage}</span>
-          <button 
+          <button
             onClick={() => setToastMessage(null)}
             className="text-stone-400 hover:text-white ml-2 text-xs"
           >
