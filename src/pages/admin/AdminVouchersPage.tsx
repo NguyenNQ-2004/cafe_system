@@ -30,7 +30,7 @@ export const AdminVouchersPage: React.FC<AdminVouchersPageProps> = ({ onNavigate
           <h1 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">Khuyến mãi & Voucher</h1>
           <p className="text-xs text-stone-500">Thiết lập các chương trình giảm giá, tặng mã khuyến mãi cho khách hàng và theo dõi hiệu quả chiến dịch.</p>
           <div className="flex gap-3 pt-2">
-            <button 
+            <button
               onClick={() => handleOpenModal()}
               className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-amber-600 transition-colors"
             >
@@ -39,7 +39,7 @@ export const AdminVouchersPage: React.FC<AdminVouchersPageProps> = ({ onNavigate
             </button>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-2xs space-y-2 relative overflow-hidden group">
             <div className="absolute top-0 right-0 w-16 h-16 bg-emerald-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110" />
@@ -56,7 +56,7 @@ export const AdminVouchersPage: React.FC<AdminVouchersPageProps> = ({ onNavigate
               <button onClick={() => handleOpenModal({ code: 'AURAFREESHIP', desc: 'Miễn phí giao hàng đơn từ 150k' })} className="text-primary font-bold hover:underline">Chỉnh sửa</button>
             </div>
           </div>
-          
+
           <div className="bg-white p-4 rounded-2xl border border-stone-200 shadow-2xs space-y-2 opacity-60">
             <div className="flex items-start justify-between">
               <div>
@@ -86,7 +86,7 @@ export const AdminVouchersPage: React.FC<AdminVouchersPageProps> = ({ onNavigate
                 <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
-            
+
             <form onSubmit={handleSave} className="p-5 space-y-4 overflow-y-auto">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-stone-600">Mã Code (In hoa)</label>
@@ -120,7 +120,7 @@ export const AdminVouchersPage: React.FC<AdminVouchersPageProps> = ({ onNavigate
                   <input type="date" className="w-full px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl outline-none focus:border-primary text-sm" />
                 </div>
               </div>
-              
+
               <div className="pt-4 flex gap-3">
                 <button type="button" onClick={() => setIsModalOpen(false)} className="flex-1 px-4 py-2.5 bg-stone-100 text-stone-700 font-bold rounded-xl text-xs hover:bg-stone-200">
                   Hủy bỏ

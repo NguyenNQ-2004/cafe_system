@@ -10,25 +10,31 @@ export type PageRoute =
   | 'payment'
   | 'orders'
   | 'profile'
-  | 'feedback'
   // POS Thu ngân
   | 'pos-create'
   | 'pos-orders'
-  | 'pos-shift'
-  | 'pos-handover'
   // Barista KDS
   | 'kds-terminal'
-  | 'kds-recipe'
   // Delivery Shipper
   | 'delivery-orders'
+  // Các route đã ẩn khỏi menu (nhưng giữ lại để không lỗi TS)
+  | 'feedback'
+  | 'pos-shift'
+  | 'pos-handover'
+  | 'kds-recipe'
   | 'delivery-report'
   | 'delivery-cod'
+  | 'admin-ingredients'
+  | 'admin-purchases'
   // Quản trị Admin ERP
   | 'admin-overview'
   | 'admin-categories'
   | 'admin-products'
   | 'admin-stock'
-  | 'admin-ingredients';
+  | 'admin-orders'
+  | 'admin-vouchers'
+  | 'admin-users'
+  | 'admin-settings';
 
 export interface Product {
   id: string;
