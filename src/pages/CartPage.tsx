@@ -9,8 +9,9 @@ interface CartPageProps {
   onToggleAllCheck: (checked: boolean) => void;
   onAddUpsellItem: (item: CartItem) => void;
   onNavigate: (route: PageRoute) => void;
-  appliedVoucher: string | null;
-  onApplyVoucher: (code: string | null) => void;
+  availablePoints: number;
+  pointsToRedeem: number;
+  onRedeemPoints: (points: number) => void;
 }
 
 export const CartPage: React.FC<CartPageProps> = ({
@@ -21,17 +22,16 @@ export const CartPage: React.FC<CartPageProps> = ({
   onToggleAllCheck,
   onAddUpsellItem,
   onNavigate,
-  appliedVoucher,
-  onApplyVoucher
+  availablePoints,
+  pointsToRedeem,
+  onRedeemPoints
 }) => {
-  const [voucherInput, setVoucherInput] = useState('');
-  const [voucherError, setVoucherError] = useState<string | null>(null);
 
   const checkedItems = cartItems.filter((i) => i.checked !== false);
   const allChecked = cartItems.length > 0 && checkedItems.length === cartItems.length;
 
   const subtotal = checkedItems.reduce((acc, item) => acc + item.unitPrice * item.quantity, 0);
-  const discount = appliedVoucher === 'WELCOME50K' ? 50000 : 0;
+  const discount = pointsToRedeem;
   const grandTotal = Math.max(0, subtotal - discount);
   const pointsEarned = Math.floor(grandTotal / 10000);
 
@@ -41,16 +41,6 @@ export const CartPage: React.FC<CartPageProps> = ({
 
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
-  };
-
-  const handleApplyCode = (code: string) => {
-    const formatted = code.trim().toUpperCase();
-    if (formatted === 'WELCOME50K' || formatted === 'FREESHIP') {
-      onApplyVoucher(formatted);
-      setVoucherError(null);
-    } else {
-      setVoucherError('Mã ưu đãi không hợp lệ hoặc đã hết hạn.');
-    }
   };
 
   return (
@@ -411,137 +401,41 @@ export const CartPage: React.FC<CartPageProps> = ({
 
             {/* RIGHT COLUMN: Order Summary & Voucher (4 cols) */}
             <aside className="lg:col-span-4 flex flex-col gap-space-lg sticky top-24">
-              {/* Voucher Card */}
+              {/* Points Redemption Card */}
               <div className="bg-surface-container-lowest rounded-xl p-space-lg shadow-sm border border-surface-container-high">
                 <div className="flex items-center gap-2 mb-space-md">
                   <span className="material-symbols-outlined text-primary text-[20px]">
-                    confirmation_number
+                    stars
                   </span>
                   <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                    Mã khuyến mãi / Voucher Aura
+                    Đổi điểm Aura Rewards
                   </h2>
                 </div>
 
-                <form
-                  className="flex gap-2 mb-space-md"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleApplyCode(voucherInput);
-                  }}
-                >
-                  <div className="relative flex-1">
-                    <input
-                      type="text"
-                      value={voucherInput}
-                      onChange={(e) => setVoucherInput(e.target.value)}
-                      placeholder="Nhập mã ưu đãi..."
-                      className="w-full h-10 px-3 bg-surface rounded-lg font-body-md text-body-md text-on-surface uppercase tracking-wider focus:outline-none focus:bg-surface-container-lowest shadow-inner border border-surface-container-highest"
-                    />
+                <div className="flex flex-col gap-4">
+                  <div className="flex justify-between items-center font-body-md text-body-md">
+                    <span className="text-on-surface-variant">Điểm hiện có:</span>
+                    <span className="font-bold text-primary">{new Intl.NumberFormat('vi-VN').format(availablePoints)} điểm</span>
                   </div>
-                  <button
-                    type="submit"
-                    className="h-10 px-4 rounded-lg bg-primary text-white font-label-md text-label-md font-semibold hover:bg-primary-container transition-colors shadow-sm cursor-pointer"
-                  >
-                    Áp dụng
-                  </button>
-                </form>
-
-                {voucherError && (
-                  <p className="text-xs text-error font-medium mb-2">{voucherError}</p>
-                )}
-
-                {/* Available Vouchers */}
-                <div className="flex flex-col gap-2">
-                  <span className="font-label-sm text-label-sm text-secondary uppercase tracking-wider font-semibold">
-                    Ưu đãi khả dụng
-                  </span>
-
-                  {/* Voucher WELCOME50K */}
-                  <div
-                    className={`p-2.5 rounded-lg flex items-center justify-between gap-space-sm relative overflow-hidden transition-all ${
-                      appliedVoucher === 'WELCOME50K'
-                        ? 'bg-surface-container-low border border-primary/30'
-                        : 'bg-surface'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <span className="material-symbols-outlined text-primary text-[22px] shrink-0 mt-0.5">
-                        verified
-                      </span>
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <span className="font-headline-sm text-headline-sm text-primary tracking-tight font-bold">
-                            WELCOME50K
-                          </span>
-                          {appliedVoucher === 'WELCOME50K' && (
-                            <span className="px-1.5 py-0.5 rounded bg-primary text-white font-label-sm text-label-sm text-[10px] font-semibold">
-                              Đang dùng
-                            </span>
-                          )}
-                        </div>
-                        <span className="font-body-sm text-body-sm text-on-surface-variant">
-                          Giảm ngay 50.000đ cho đơn đầu tiên
-                        </span>
-                      </div>
-                    </div>
-                    {appliedVoucher === 'WELCOME50K' ? (
-                      <button
-                        type="button"
-                        onClick={() => onApplyVoucher(null)}
-                        className="text-error hover:underline font-label-sm text-label-sm font-semibold shrink-0 cursor-pointer"
-                      >
-                        Gỡ
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => onApplyVoucher('WELCOME50K')}
-                        className="text-primary hover:underline font-label-sm text-label-sm font-semibold shrink-0 cursor-pointer"
-                      >
-                        Chọn
-                      </button>
-                    )}
+                  
+                  <div className="flex justify-between items-center font-body-md text-body-md">
+                    <span className="text-on-surface-variant">Điểm muốn đổi:</span>
+                    <span className="font-bold text-on-surface">{new Intl.NumberFormat('vi-VN').format(pointsToRedeem)} điểm</span>
                   </div>
-
-                  {/* Voucher FREESHIP */}
-                  <div
-                    className={`p-2.5 rounded-lg flex items-center justify-between gap-space-sm transition-colors ${
-                      appliedVoucher === 'FREESHIP'
-                        ? 'bg-surface-container-low border border-primary/30'
-                        : 'bg-surface hover:bg-surface-container-high'
-                    }`}
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <span className="material-symbols-outlined text-secondary text-[22px] shrink-0 mt-0.5">
-                        local_shipping
-                      </span>
-                      <div className="flex flex-col">
-                        <span className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                          FREESHIP
-                        </span>
-                        <span className="font-body-sm text-body-sm text-on-surface-variant">
-                          Miễn phí vận chuyển cho đơn từ 150k
-                        </span>
-                      </div>
-                    </div>
-                    {appliedVoucher === 'FREESHIP' ? (
-                      <button
-                        type="button"
-                        onClick={() => onApplyVoucher(null)}
-                        className="text-error hover:underline font-label-sm text-label-sm font-semibold shrink-0 cursor-pointer"
-                      >
-                        Gỡ
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => onApplyVoucher('FREESHIP')}
-                        className="text-primary hover:underline font-label-sm text-label-sm font-semibold shrink-0 cursor-pointer"
-                      >
-                        Chọn
-                      </button>
-                    )}
-                  </div>
+                  
+                  <input
+                    type="range"
+                    min="0"
+                    max={Math.min(availablePoints, subtotal)}
+                    step="1000"
+                    value={pointsToRedeem}
+                    onChange={(e) => onRedeemPoints(Number(e.target.value))}
+                    className="w-full h-2 bg-surface-container-highest rounded-lg appearance-none cursor-pointer accent-primary mt-2"
+                  />
+                  
+                  <p className="font-body-sm text-body-sm text-secondary mt-1">
+                    1 điểm = 1đ. Có thể đổi tối đa {new Intl.NumberFormat('vi-VN').format(Math.min(availablePoints, subtotal))} điểm cho đơn hàng này.
+                  </p>
                 </div>
               </div>
 
@@ -561,7 +455,7 @@ export const CartPage: React.FC<CartPageProps> = ({
 
                   {discount > 0 && (
                     <div className="flex justify-between items-center text-primary font-medium">
-                      <span>Giảm giá voucher ({appliedVoucher})</span>
+                      <span>Thanh toán bằng điểm</span>
                       <span className="font-tabular-data text-tabular-data font-bold">
                         -{formatPrice(discount)}
                       </span>

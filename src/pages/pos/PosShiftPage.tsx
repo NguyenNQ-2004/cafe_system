@@ -307,8 +307,8 @@ export const PosShiftPage: React.FC<PosShiftPageProps> = ({ onNavigate, onShowTo
                             <span className="material-symbols-outlined text-[16px]">loyalty</span>
                           </div>
                           <div>
-                            <strong className="text-stone-900 block text-xs">Ví Aura Rewards & Voucher</strong>
-                            <span className="text-[10px] text-stone-400 font-sans">Trừ điểm thẻ thành viên & E-voucher</span>
+                            <strong className="text-stone-900 block text-xs">Ví Aura Rewards</strong>
+                            <span className="text-[10px] text-stone-400 font-sans">Trừ điểm thẻ thành viên để thanh toán</span>
                           </div>
                         </div>
                       </td>

@@ -432,7 +432,7 @@ export const PaymentPage: React.FC<PaymentPageProps> = ({
                             ShopeePay
                           </div>
                           <div className="font-label-sm text-label-sm text-secondary">
-                            Voucher tích lũy
+                            Điểm tích luỹ
                           </div>
                         </div>
                       </button>

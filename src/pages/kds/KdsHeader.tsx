@@ -51,17 +51,6 @@ export const KdsHeader: React.FC<KdsHeaderProps> = ({ currentRoute, onNavigate }
             <span className="material-symbols-outlined text-[16px]">blender</span>
             <span>Màn hình KDS (F1)</span>
           </button>
-          <button
-            onClick={() => onNavigate('kds-recipe')}
-            className={`px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-colors flex items-center gap-1.5 ${
-              currentRoute === 'kds-recipe'
-                ? 'bg-primary text-white shadow-xs'
-                : 'text-stone-600 hover:text-stone-900'
-            }`}
-          >
-            <span className="material-symbols-outlined text-[16px]">menu_book</span>
-            <span>Công thức & Định lượng (F2)</span>
-          </button>
         </nav>
 
         {/* Shift stats */}

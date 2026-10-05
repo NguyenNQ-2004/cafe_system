@@ -30,7 +30,6 @@ import { PosHandoverPage } from './pages/pos/PosHandoverPage';
 
 // Barista KDS Pages
 import { KdsTerminalPage } from './pages/kds/KdsTerminalPage';
-import { KdsRecipePage } from './pages/kds/KdsRecipePage';
 
 // Delivery Portal Pages
 import { DeliveryOrdersPage } from './pages/delivery/DeliveryOrdersPage';
@@ -43,15 +42,21 @@ import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
 import { AdminStockPage } from './pages/admin/AdminStockPage';
 import { AdminIngredientsPage } from './pages/admin/AdminIngredientsPage';
+import { AdminSuppliersPage } from './pages/admin/AdminSuppliersPage';
+import { AdminPurchasesPage } from './pages/admin/AdminPurchasesPage';
 import { AdminAttendancePage } from './pages/admin/AdminAttendancePage';
+import { AdminShiftsPage } from './pages/admin/AdminShiftsPage';
+import { AdminSchedulesPage } from './pages/admin/AdminSchedulesPage';
 import { AdminUsersPage } from './pages/admin/AdminUsersPage';
-import { AdminVouchersPage } from './pages/admin/AdminVouchersPage';
+import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
+import { AdminComplaintsPage } from './pages/admin/AdminComplaintsPage';
 
 export default function App() {
   const [currentRoute, setCurrentRoute] = useState<PageRoute>('home');
   const [selectedProductId, setSelectedProductId] = useState<string>('ca-phe-muoi');
   const [cartItems, setCartItems] = useState<CartItem[]>(INITIAL_CART_ITEMS);
-  const [appliedVoucher, setAppliedVoucher] = useState<string | null>('AURAFREESHIP');
+  const [availablePoints, setAvailablePoints] = useState<number>(25000);
+  const [pointsToRedeem, setPointsToRedeem] = useState<number>(0);
   const [pastOrders, setPastOrders] = useState<PastOrder[]>(INITIAL_PAST_ORDERS);
 
   // Modals & Overlays
@@ -195,40 +200,44 @@ export default function App() {
     role: 'customer' | 'pos' | 'kds' | 'delivery' | 'admin';
   }[] = [
       // 1. Khách hàng
-      { route: 'home', label: 'Trang chủ Aura Café', tag: 'Page 6', icon: 'storefront', role: 'customer' },
-      { route: 'menu', label: 'Menu & Đồ uống', tag: 'Page 1', icon: 'menu_book', role: 'customer' },
-      { route: 'customize', label: 'Chi tiết & Custom món', tag: 'Page 9', icon: 'tune', role: 'customer' },
-      { route: 'cart', label: 'Giỏ hàng của bạn', tag: 'Page 8', icon: 'shopping_bag', role: 'customer' },
-      { route: 'checkout', label: 'Xác nhận đơn & Địa chỉ', tag: 'Page 4', icon: 'local_shipping', role: 'customer' },
-      { route: 'payment', label: 'Thanh toán & VietQR', tag: 'Page 7', icon: 'qr_code_2', role: 'customer' },
-      { route: 'orders', label: 'Theo dõi đơn hàng', tag: 'Page 5', icon: 'moped', role: 'customer' },
-      { route: 'profile', label: 'Aura Rewards & VIP', tag: 'Page 2', icon: 'workspace_premium', role: 'customer' },
-      { route: 'feedback', label: 'Khiếu nại & Góp ý', tag: 'Page 3', icon: 'rate_review', role: 'customer' },
+      { route: 'home', label: 'Trang chủ Aura Café', tag: 'Page 1', icon: 'storefront', role: 'customer' },
+      { route: 'menu', label: 'Menu & Đồ uống', tag: 'Page 2', icon: 'menu_book', role: 'customer' },
+      { route: 'customize', label: 'Chi tiết & Custom món', tag: 'Page 3', icon: 'tune', role: 'customer' },
+      { route: 'cart', label: 'Giỏ hàng của bạn', tag: 'Page 4', icon: 'shopping_bag', role: 'customer' },
+      { route: 'checkout', label: 'Xác nhận đơn & Địa chỉ', tag: 'Page 5', icon: 'local_shipping', role: 'customer' },
+      { route: 'payment', label: 'Thanh toán & VietQR', tag: 'Page 6', icon: 'qr_code_2', role: 'customer' },
+      { route: 'orders', label: 'Theo dõi đơn hàng', tag: 'Page 7', icon: 'moped', role: 'customer' },
+      { route: 'profile', label: 'Aura Rewards & VIP', tag: 'Page 8', icon: 'workspace_premium', role: 'customer' },
+      { route: 'feedback', label: 'Khiếu nại & Góp ý', tag: 'Page 9', icon: 'rate_review', role: 'customer' },
 
       // 2. Thu ngân POS
-      { route: 'pos-create', label: 'Tạo đơn quầy & Khách', tag: 'Page 11', icon: 'point_of_sale', role: 'pos' },
-      { route: 'pos-orders', label: 'Quản lý đơn quầy POS', tag: 'Page 12', icon: 'receipt_long', role: 'pos' },
-      { route: 'pos-shift', label: 'Quản lý ca & Đối soát két', tag: 'Page 13', icon: 'savings', role: 'pos' },
-      { route: 'pos-handover', label: 'Biên bản bàn giao ca', tag: 'Page 14', icon: 'assignment_turned_in', role: 'pos' },
+      { route: 'pos-create', label: 'Tạo đơn quầy & Khách', tag: 'Page 10', icon: 'point_of_sale', role: 'pos' },
+      { route: 'pos-orders', label: 'Quản lý đơn quầy POS', tag: 'Page 11', icon: 'receipt_long', role: 'pos' },
+      { route: 'pos-shift', label: 'Quản lý ca & Đối soát két', tag: 'Page 12', icon: 'savings', role: 'pos' },
+      { route: 'pos-handover', label: 'Biên bản bàn giao ca', tag: 'Page 13', icon: 'assignment_turned_in', role: 'pos' },
 
       // 3. Barista KDS
-      { route: 'kds-terminal', label: 'Màn hình Barista KDS', tag: 'Page 15', icon: 'blender', role: 'kds' },
-      { route: 'kds-recipe', label: 'Sổ tay công thức SOP', tag: 'Page 16', icon: 'science', role: 'kds' },
+      { route: 'kds-terminal', label: 'Màn hình Barista KDS', tag: 'Page 14', icon: 'blender', role: 'kds' },
 
       // 4. Đội giao hàng Delivery
-      { route: 'delivery-orders', label: 'Đơn được phân công & GPS', tag: 'Page 17', icon: 'directions_bike', role: 'delivery' },
-      { route: 'delivery-report', label: 'Báo cáo sự cố đơn hàng', tag: 'Page 18', icon: 'report_problem', role: 'delivery' },
-      { route: 'delivery-cod', label: 'Đối soát COD & Chốt ca', tag: 'Page 19', icon: 'payments', role: 'delivery' },
+      { route: 'delivery-orders', label: 'Đơn được phân công & GPS', tag: 'Page 15', icon: 'directions_bike', role: 'delivery' },
+      { route: 'delivery-report', label: 'Báo cáo sự cố đơn hàng', tag: 'Page 16', icon: 'report_problem', role: 'delivery' },
+      { route: 'delivery-cod', label: 'Đối soát COD & Chốt ca', tag: 'Page 17', icon: 'payments', role: 'delivery' },
 
       // 5. Quản trị chuỗi Admin ERP
-      { route: 'admin-overview', label: 'Tổng quan điều hành chuỗi', tag: 'Page 20', icon: 'dashboard', role: 'admin' },
-      { route: 'admin-categories', label: 'Quản trị danh mục thực đơn', tag: 'Page 21', icon: 'category', role: 'admin' },
-      { route: 'admin-products', label: 'Quản lý Món & Giá niêm yết', tag: 'Page 22', icon: 'local_cafe', role: 'admin' },
-      { route: 'admin-stock', label: 'Tổng quan tồn kho chi nhánh', tag: 'Page 23', icon: 'inventory_2', role: 'admin' },
-      { route: 'admin-ingredients', label: 'Quản lý nguyên liệu & NCC', tag: 'Page 24', icon: 'shelves', role: 'admin' },
+      { route: 'admin-overview', label: 'Tổng quan điều hành chuỗi', tag: 'Page 18', icon: 'dashboard', role: 'admin' },
+      { route: 'admin-categories', label: 'Quản trị danh mục thực đơn', tag: 'Page 19', icon: 'category', role: 'admin' },
+      { route: 'admin-products', label: 'Quản lý Món & Giá niêm yết', tag: 'Page 20', icon: 'local_cafe', role: 'admin' },
+      { route: 'admin-stock', label: 'Tổng quan tồn kho chi nhánh', tag: 'Page 21', icon: 'inventory_2', role: 'admin' },
+      { route: 'admin-ingredients', label: 'Quản lý nguyên liệu & NCC', tag: 'Page 22', icon: 'shelves', role: 'admin' },
+      { route: 'admin-suppliers', label: 'Nhà cung cấp', tag: 'Page 23', icon: 'local_shipping', role: 'admin' },
+      { route: 'admin-purchases', label: 'Phiếu mua hàng', tag: 'Page 24', icon: 'receipt_long', role: 'admin' },
       { route: 'admin-users', label: 'Danh sách nhân sự', tag: 'Page 25', icon: 'group', role: 'admin' },
-      { route: 'admin-attendance', label: 'Nhân sự & Chấm công', tag: 'Page 26', icon: 'badge', role: 'admin' },
-      { route: 'admin-vouchers', label: 'Khuyến mãi & Voucher', tag: 'Page 27', icon: 'local_offer', role: 'admin' },
+      { route: 'admin-shifts', label: 'Cấu hình ca làm', tag: 'Page 26', icon: 'schedule', role: 'admin' },
+      { route: 'admin-schedules', label: 'Xếp lịch nhân viên', tag: 'Page 27', icon: 'calendar_month', role: 'admin' },
+      { route: 'admin-attendance', label: 'Nhân sự & Chấm công', tag: 'Page 28', icon: 'badge', role: 'admin' },
+      { route: 'admin-customers', label: 'Khách hàng', tag: 'Page 29', icon: 'contact_page', role: 'admin' },
+      { route: 'admin-complaints', label: 'Khiếu nại', tag: 'Page 30', icon: 'feedback', role: 'admin' },
     ];
 
   const filteredScreens = allScreens.filter(
@@ -281,15 +290,16 @@ export default function App() {
             onToggleItemCheck={handleToggleCheck}
             onToggleAllCheck={(checked) => setCartItems(prev => prev.map(i => ({ ...i, checked })))}
             onAddUpsellItem={(item) => setCartItems(prev => [item, ...prev])}
-            appliedVoucher={appliedVoucher}
-            onApplyVoucher={setAppliedVoucher}
+            availablePoints={availablePoints}
+            pointsToRedeem={pointsToRedeem}
+            onRedeemPoints={setPointsToRedeem}
             onNavigate={handleNavigate}
           />
         )}
         {currentRoute === 'checkout' && (
           <CheckoutPage
             cartItems={cartItems.filter(i => i.checked !== false)}
-            appliedVoucher={appliedVoucher}
+            pointsToRedeem={pointsToRedeem}
             onNavigate={handleNavigate}
           />
         )}
@@ -354,12 +364,6 @@ export default function App() {
             onShowToast={showToast}
           />
         )}
-        {currentRoute === 'kds-recipe' && (
-          <KdsRecipePage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
 
         {/* Delivery Pages */}
         {currentRoute === 'delivery-orders' && (
@@ -412,6 +416,18 @@ export default function App() {
             onShowToast={showToast}
           />
         )}
+        {currentRoute === 'admin-suppliers' && (
+          <AdminSuppliersPage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
+          />
+        )}
+        {currentRoute === 'admin-purchases' && (
+          <AdminPurchasesPage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
+          />
+        )}
         {currentRoute === 'admin-attendance' && (
           <AdminAttendancePage
             onNavigate={handleNavigate}
@@ -424,8 +440,26 @@ export default function App() {
             onShowToast={showToast}
           />
         )}
-        {currentRoute === 'admin-vouchers' && (
-          <AdminVouchersPage
+        {currentRoute === 'admin-shifts' && (
+          <AdminShiftsPage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
+          />
+        )}
+        {currentRoute === 'admin-schedules' && (
+          <AdminSchedulesPage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
+          />
+        )}
+        {currentRoute === 'admin-customers' && (
+          <AdminCustomersPage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
+          />
+        )}
+        {currentRoute === 'admin-complaints' && (
+          <AdminComplaintsPage
             onNavigate={handleNavigate}
             onShowToast={showToast}
           />
@@ -459,7 +493,7 @@ export default function App() {
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-stone-100">
               <span className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-primary" />
-                Hệ Thống Aura Café (23 Màn hình)
+                Hệ Thống Aura Café (30 Màn hình)
               </span>
               <button
                 onClick={() => setIsScreenNavOpen(false)}
@@ -472,7 +506,7 @@ export default function App() {
             {/* Role Filter Tabs */}
             <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-2 text-[11px] font-semibold border-b border-stone-100">
               {[
-                { id: 'all', label: 'Tất cả (23)' },
+                { id: 'all', label: 'Tất cả (30)' },
                 { id: 'customer', label: 'Khách hàng' },
                 { id: 'pos', label: 'Thu ngân' },
                 { id: 'kds', label: 'Barista' },
@@ -483,8 +517,8 @@ export default function App() {
                   key={f.id}
                   onClick={() => setNavRoleFilter(f.id as any)}
                   className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition-colors ${navRoleFilter === f.id
-                      ? 'bg-primary text-white shadow-2xs'
-                      : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    ? 'bg-primary text-white shadow-2xs'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                     }`}
                 >
                   {f.label}
@@ -504,8 +538,8 @@ export default function App() {
                       setIsScreenNavOpen(false);
                     }}
                     className={`flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition-all ${isActive
-                        ? 'bg-primary text-white font-bold shadow-xs'
-                        : 'hover:bg-stone-100 text-stone-700'
+                      ? 'bg-primary text-white font-bold shadow-xs'
+                      : 'hover:bg-stone-100 text-stone-700'
                       }`}
                   >
                     <div className="flex items-center gap-2 truncate">
@@ -514,8 +548,8 @@ export default function App() {
                     </div>
                     <span
                       className={`text-[10px] font-mono px-1.5 py-0.5 rounded shrink-0 ml-2 ${isActive
-                          ? 'bg-white/20 text-white'
-                          : 'bg-stone-200/70 text-stone-500'
+                        ? 'bg-white/20 text-white'
+                        : 'bg-stone-200/70 text-stone-500'
                         }`}
                     >
                       {s.tag}
@@ -535,7 +569,7 @@ export default function App() {
           <span className="material-symbols-outlined text-amber-400 group-hover:rotate-45 transition-transform text-[20px]">
             grid_view
           </span>
-          <span className="text-xs font-bold">Chuyển Phân Hệ (23 Màn hình)</span>
+          <span className="text-xs font-bold">Chuyển Phân Hệ (30 Màn hình)</span>
         </button>
       </div>
 

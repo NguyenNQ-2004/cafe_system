@@ -20,7 +20,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [loginIdentifier, setLoginIdentifier] = useState('barista.nguyen@auracafe.vn');
   const [loginPassword, setLoginPassword] = useState('password123');
   const [regName, setRegName] = useState('');
-  const [regRole, setRegRole] = useState('customer');
+  const [regPhone, setRegPhone] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [forgotInput, setForgotInput] = useState('');
@@ -56,7 +56,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   const handleForgotSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    triggerToast('Đã gửi mã OTP khôi phục 6 số qua số điện thoại/email!');
+    triggerToast('Đã gửi liên kết khôi phục mật khẩu qua Gmail của bạn!');
     setTimeout(() => {
       setActiveTab('login');
     }, 1500);
@@ -310,7 +310,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       fill="#EA4335"
                     />
                   </svg>
-                  <span>Google Workspace</span>
+                  <span>Đăng nhập với Google</span>
                 </button>
                 <button
                   type="button"
@@ -352,35 +352,33 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                 </div>
                 <div className="space-y-space-xs">
                   <label className="font-label-md text-label-md text-on-surface font-medium block">
-                    Vai trò dự kiến
+                    Số điện thoại
                   </label>
-                  <select
-                    value={regRole}
-                    onChange={(e) => setRegRole(e.target.value)}
-                    className="w-full h-11 px-space-md bg-surface-container-low rounded text-on-surface font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container/20 border-0 cursor-pointer"
-                  >
-                    <option value="customer">Khách hàng thành viên</option>
-                    <option value="cashier">Thu ngân (Cashier POS)</option>
-                    <option value="barista">Pha chế (Barista KDS)</option>
-                    <option value="driver">Tài xế giao hàng (Driver)</option>
-                  </select>
+                  <input
+                    type="tel"
+                    required
+                    value={regPhone}
+                    onChange={(e) => setRegPhone(e.target.value)}
+                    placeholder="0908xxxxxx"
+                    className="w-full h-11 px-space-md bg-surface-container-low rounded text-on-surface placeholder:text-secondary/60 font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container/20 border-0"
+                  />
                 </div>
               </div>
 
               <div className="space-y-space-xs">
                 <label className="font-label-md text-label-md text-on-surface font-medium block">
-                  Email hoặc Số điện thoại xác thực
+                  Địa chỉ Email (Gmail)
                 </label>
                 <div className="relative flex items-center">
                   <span className="material-symbols-outlined absolute left-space-md text-secondary text-[20px]">
                     alternate_email
                   </span>
                   <input
-                    type="text"
+                    type="email"
                     required
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
-                    placeholder="aurastaff@auracafe.vn hoặc 0908xxxxxx"
+                    placeholder="khachhang@gmail.com"
                     className="w-full h-11 pl-11 pr-space-md bg-surface-container-low rounded text-on-surface placeholder:text-secondary/60 font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container/20 border-0"
                   />
                 </div>
@@ -456,24 +454,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   Khôi phục quyền truy cập
                 </h2>
                 <p className="font-body-sm text-body-sm text-secondary">
-                  Hệ thống sẽ gửi liên kết xác minh hoặc mã OTP 6 số để đặt lại mật khẩu
+                  Hệ thống sẽ gửi liên kết khôi phục mật khẩu vào hòm thư Gmail của bạn
                 </p>
               </div>
 
               <div className="space-y-space-xs mt-space-xs">
                 <label className="font-label-md text-label-md text-on-surface font-medium block">
-                  Số điện thoại hoặc Email đã liên kết
+                  Địa chỉ Email (Gmail)
                 </label>
                 <div className="relative flex items-center">
                   <span className="material-symbols-outlined absolute left-space-md text-secondary text-[20px]">
                     mail
                   </span>
                   <input
-                    type="text"
+                    type="email"
                     required
                     value={forgotInput}
                     onChange={(e) => setForgotInput(e.target.value)}
-                    placeholder="name@auracafe.vn hoặc 0908xxxxxx"
+                    placeholder="khachhang@gmail.com"
                     className="w-full h-11 pl-11 pr-space-md bg-surface-container-low rounded text-on-surface placeholder:text-secondary/60 font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container/20 border-0"
                   />
                 </div>

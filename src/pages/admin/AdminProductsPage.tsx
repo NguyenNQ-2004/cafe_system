@@ -227,7 +227,6 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
                   <th className="py-3 px-4 text-right">Giá Bán POS</th>
                   <th className="py-3 px-4 text-center">Margin (%)</th>
                   <th className="py-3 px-4">Quy Cách & Size</th>
-                  <th className="py-3 px-4 text-center">Công Thức Recipe</th>
                   <th className="py-3 px-4 text-center">Trạng Thái</th>
                   <th className="py-3 px-4 text-right">Thao Tác</th>
                 </tr>
@@ -278,16 +277,6 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
 
                     <td className="py-3 px-4 text-center">
                       <button
-                        onClick={() => onNavigate('kds-recipe')}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-semibold hover:bg-emerald-100 text-[11px]"
-                      >
-                        <span className="material-symbols-outlined text-[14px]">science</span>
-                        <span>Đã có Recipe</span>
-                      </button>
-                    </td>
-
-                    <td className="py-3 px-4 text-center">
-                      <button
                         onClick={() => toggleProductActive(prod.id)}
                         className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
                           prod.active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
@@ -299,13 +288,6 @@ export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate
 
                     <td className="py-3 px-4 text-right">
                       <div className="flex items-center justify-end gap-1 text-stone-400">
-                        <button
-                          onClick={() => onNavigate('kds-recipe')}
-                          className="p-1 hover:text-primary rounded"
-                          title="Xem công thức"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">receipt</span>
-                        </button>
                         <button
                           onClick={() => onShowToast?.(`Đang mở popup chỉnh sửa giá món #${prod.id}`)}
                           className="p-1 hover:text-stone-800 rounded"

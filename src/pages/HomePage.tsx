@@ -58,7 +58,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 <span className="material-symbols-outlined text-primary text-[20px]">
                   workspace_premium
                 </span>
-                <span>Kích hoạt thẻ thành viên</span>
+                <span>Xem điểm tích luỹ</span>
               </button>
             </div>
 
@@ -121,20 +121,7 @@ export const HomePage: React.FC<HomePageProps> = ({
                 </div>
               </div>
 
-              {/* Floating Welcome 50K Voucher */}
-              <div className="absolute -bottom-6 -left-6 bg-surface-container-lowest p-space-md rounded-xl shadow-lg max-w-xs flex items-center gap-space-md border border-surface-container-high">
-                <div className="w-12 h-12 rounded-lg bg-primary-container text-white flex items-center justify-center shrink-0">
-                  <span className="material-symbols-outlined text-[24px]">card_membership</span>
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <span className="font-label-sm text-label-sm text-primary uppercase font-bold">
-                    Voucher Welcome 50K
-                  </span>
-                  <span className="font-body-sm text-body-sm text-on-surface truncate">
-                    Áp dụng cho đơn hàng đầu tiên
-                  </span>
-                </div>
-              </div>
+
             </div>
           </div>
         </div>
@@ -511,203 +498,7 @@ export const HomePage: React.FC<HomePageProps> = ({
         </div>
       </div>
 
-      {/* Loyalty Matrix Section */}
-      <div className="w-full px-margin-lg py-space-xl">
-        <div className="max-w-7xl mx-auto flex flex-col gap-space-lg">
-          <div className="flex flex-col gap-space-xs">
-            <span className="font-label-sm text-label-sm text-primary uppercase font-bold tracking-wider">
-              Aura Loyalty Matrix
-            </span>
-            <h2 className="font-headline-lg text-headline-lg text-on-surface tracking-tight font-bold">
-              Ưu đãi điểm thưởng tích luỹ Member
-            </h2>
-            <p className="font-body-md text-body-md text-on-surface-variant">
-              Mỗi 10.000đ chi tiêu tương đương 1 Điểm Aura (A-Point). Nâng cấp hạng để nhận gấp bội đặc quyền.
-            </p>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-gutter-lg items-stretch">
-            {/* Silver Tier */}
-            <div className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-sm flex flex-col justify-between relative overflow-hidden border border-surface-container-high">
-              <div className="flex flex-col gap-space-md">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-lg bg-surface-container-highest text-secondary flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[24px]">military_tech</span>
-                  </div>
-                  <span className="px-space-sm py-1 rounded bg-surface-container text-on-surface-variant font-label-sm text-label-sm uppercase font-semibold">
-                    Khởi đầu
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <h3 className="font-headline-lg text-headline-lg text-on-surface font-bold">
-                    Silver Member
-                  </h3>
-                  <span className="font-body-sm text-body-sm text-secondary">
-                    Tích lũy từ 0 - 299 Điểm
-                  </span>
-                </div>
-                <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-                  <div className="h-full bg-secondary w-1/3 rounded-full" />
-                </div>
-                <ul className="flex flex-col gap-space-sm pt-space-xs font-body-md text-body-md text-on-surface-variant">
-                  <li className="flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-primary text-[18px]">
-                      check_circle
-                    </span>
-                    <span>
-                      Tích luỹ <strong>1 Điểm</strong> cho mỗi 10.000đ
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-primary text-[18px]">
-                      check_circle
-                    </span>
-                    <span>Tặng 01 E-Voucher 20% tháng sinh nhật</span>
-                  </li>
-                  <li className="flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-primary text-[18px]">
-                      check_circle
-                    </span>
-                    <span>Đổi voucher món ăn kèm chỉ từ 50 Điểm</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="mt-space-lg pt-space-md">
-                <button
-                  onClick={() => onNavigate('profile')}
-                  className="w-full h-10 flex items-center justify-center rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md transition-colors cursor-pointer"
-                >
-                  Xem chi tiết hạng Silver
-                </button>
-              </div>
-            </div>
-
-            {/* Gold Tier */}
-            <div className="bg-surface-container-lowest rounded-2xl p-space-lg shadow-md flex flex-col justify-between relative overflow-hidden bg-gradient-to-b from-surface-container-lowest to-surface-container-high/40 border-2 border-tertiary-container/30">
-              <div className="absolute -right-10 -top-10 w-32 h-32 rounded-full bg-tertiary-container/10 blur-xl pointer-events-none" />
-              <div className="flex flex-col gap-space-md relative z-10">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-lg bg-tertiary-fixed text-on-tertiary-fixed flex items-center justify-center">
-                    <span className="material-symbols-outlined text-[24px]">workspace_premium</span>
-                  </div>
-                  <span className="px-space-sm py-1 rounded bg-tertiary-container text-white font-label-sm text-label-sm uppercase font-semibold">
-                    Phổ biến nhất
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <h3 className="font-headline-lg text-headline-lg text-tertiary font-bold">
-                    Gold Member
-                  </h3>
-                  <span className="font-body-sm text-body-sm text-on-surface-variant">
-                    Tích lũy từ 300 - 799 Điểm
-                  </span>
-                </div>
-                <div className="h-1.5 w-full bg-surface-container rounded-full overflow-hidden">
-                  <div className="h-full bg-tertiary-container w-2/3 rounded-full" />
-                </div>
-                <ul className="flex flex-col gap-space-sm pt-space-xs font-body-md text-body-md text-on-surface-variant">
-                  <li className="flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-primary text-[18px]">
-                      check_circle
-                    </span>
-                    <span>
-                      Tích luỹ nhân hệ số <strong>x1.5 Điểm</strong>
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-primary text-[18px]">
-                      check_circle
-                    </span>
-                    <span>Tặng 01 Ly đồ uống miễn phí tháng sinh nhật</span>
-                  </li>
-                  <li className="flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-primary text-[18px]">
-                      check_circle
-                    </span>
-                    <span>Miễn phí nâng cấp Size (Up-size) 2 lần/tháng</span>
-                  </li>
-                  <li className="flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-primary text-[18px]">
-                      check_circle
-                    </span>
-                    <span>Ưu tiên pha chế giờ cao điểm tại quầy</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="mt-space-lg pt-space-md relative z-10">
-                <button
-                  onClick={() => onNavigate('profile')}
-                  className="w-full h-10 flex items-center justify-center rounded-lg bg-tertiary-container text-white font-label-md text-label-md hover:opacity-95 transition-opacity cursor-pointer font-semibold shadow-sm"
-                >
-                  Đặc quyền Gold Member
-                </button>
-              </div>
-            </div>
-
-            {/* Diamond Tier */}
-            <div className="bg-inverse-surface text-inverse-on-surface rounded-2xl p-space-lg shadow-xl flex flex-col justify-between relative overflow-hidden">
-              <div className="absolute -right-8 -bottom-8 w-40 h-40 rounded-full bg-primary/20 blur-2xl pointer-events-none" />
-              <div className="flex flex-col gap-space-md relative z-10">
-                <div className="flex items-center justify-between">
-                  <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center shadow">
-                    <span className="material-symbols-outlined text-[24px]">diamond</span>
-                  </div>
-                  <span className="px-space-sm py-1 rounded bg-primary-container text-white font-label-sm text-label-sm uppercase font-semibold">
-                    VIP Tối thượng
-                  </span>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <h3 className="font-headline-lg text-headline-lg text-white font-bold">
-                    Diamond Member
-                  </h3>
-                  <span className="font-body-sm text-body-sm text-surface-variant">
-                    Tích lũy từ 800 Điểm trở lên
-                  </span>
-                </div>
-                <div className="h-1.5 w-full bg-surface-container-highest/30 rounded-full overflow-hidden">
-                  <div className="h-full bg-primary w-full rounded-full" />
-                </div>
-                <ul className="flex flex-col gap-space-sm pt-space-xs font-body-md text-body-md text-surface-variant">
-                  <li className="flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-primary-fixed-dim text-[18px]">
-                      verified
-                    </span>
-                    <span className="text-surface-bright">
-                      Tích luỹ nhân hệ số <strong>x2.0 Điểm</strong> toàn diện
-                    </span>
-                  </li>
-                  <li className="flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-primary-fixed-dim text-[18px]">
-                      verified
-                    </span>
-                    <span>Combo Sinh nhật: Bánh ngọt + Đồ uống đặc quyền</span>
-                  </li>
-                  <li className="flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-primary-fixed-dim text-[18px]">
-                      verified
-                    </span>
-                    <span>Miễn phí giao hàng không giới hạn khoảng cách</span>
-                  </li>
-                  <li className="flex items-center gap-space-sm">
-                    <span className="material-symbols-outlined text-primary-fixed-dim text-[18px]">
-                      verified
-                    </span>
-                    <span>Lời mời tham dự Workshop Cà phê thử nếm (Cupping)</span>
-                  </li>
-                </ul>
-              </div>
-              <div className="mt-space-lg pt-space-md relative z-10">
-                <button
-                  onClick={() => onNavigate('profile')}
-                  className="w-full h-10 flex items-center justify-center rounded-lg bg-surface-container-lowest text-on-surface font-label-md text-label-md hover:bg-surface-container transition-colors cursor-pointer font-semibold"
-                >
-                  Gia nhập Diamond Club
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Call to Action Banner */}
       <div className="w-full px-margin-lg pb-space-xl">

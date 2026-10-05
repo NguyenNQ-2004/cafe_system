@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { PageRoute } from '../../types';
 import { KdsHeader } from './KdsHeader';
 
@@ -35,6 +35,7 @@ interface KdsTicket {
 export const KdsTerminalPage: React.FC<KdsTerminalPageProps> = ({ onNavigate, onShowToast }) => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [activeStation, setActiveStation] = useState('all');
+  const [viewMode, setViewMode] = useState<'by-order' | 'by-item'>('by-order');
   const [recallModalTicket, setRecallModalTicket] = useState<string | null>(null);
 
   const [tickets, setTickets] = useState<KdsTicket[]>([
@@ -148,6 +149,49 @@ export const KdsTerminalPage: React.FC<KdsTerminalPageProps> = ({ onNavigate, on
     setRecallModalTicket(null);
   };
 
+  const groupedItems = useMemo(() => {
+    const groups: Record<string, { name: string, tags: string[], totalQty: number, ticketCodes: string[], doneQty: number }> = {};
+    
+    tickets.filter(t => t.type !== 'completed').forEach(ticket => {
+      ticket.items.forEach(item => {
+        const key = `${item.name}-${(item.tags || []).join('-')}`;
+        if (!groups[key]) {
+          groups[key] = {
+            name: item.name,
+            tags: item.tags || [],
+            totalQty: 0,
+            doneQty: 0,
+            ticketCodes: []
+          };
+        }
+        groups[key].totalQty += item.qty;
+        if (item.isDone) {
+           groups[key].doneQty += item.qty;
+        }
+        if (!groups[key].ticketCodes.includes(ticket.code)) {
+          groups[key].ticketCodes.push(ticket.code);
+        }
+      });
+    });
+    
+    return Object.values(groups).sort((a, b) => b.totalQty - a.totalQty);
+  }, [tickets]);
+
+  const handleCompleteBatch = (name: string, tags: string[]) => {
+    const tagStr = tags.join('-');
+    setTickets(prev => prev.map(t => ({
+      ...t,
+      items: t.items.map(it => {
+        const itTagStr = (it.tags || []).join('-');
+        if (it.name === name && itTagStr === tagStr) {
+          return { ...it, isDone: true };
+        }
+        return it;
+      })
+    })));
+    onShowToast?.(`Đã hoàn tất lô pha chế: ${name}`);
+  };
+
   return (
     <div className="min-h-screen bg-stone-100 pb-16 flex flex-col">
       <KdsHeader currentRoute="kds-terminal" onNavigate={onNavigate} onShowToast={onShowToast} />
@@ -192,6 +236,26 @@ export const KdsTerminalPage: React.FC<KdsTerminalPageProps> = ({ onNavigate, on
 
           {/* Action toggles */}
           <div className="flex items-center gap-2 text-xs">
+            <div className="flex items-center bg-stone-100 rounded-xl p-1 border border-stone-200 mr-2">
+              <button
+                onClick={() => setViewMode('by-order')}
+                className={`h-7 px-3 rounded-lg flex items-center gap-1.5 font-semibold transition-colors ${
+                  viewMode === 'by-order' ? 'bg-white shadow-xs text-stone-800' : 'text-stone-500 hover:text-stone-700'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">receipt</span>
+                <span className="hidden sm:inline">Theo Đơn</span>
+              </button>
+              <button
+                onClick={() => setViewMode('by-item')}
+                className={`h-7 px-3 rounded-lg flex items-center gap-1.5 font-semibold transition-colors ${
+                  viewMode === 'by-item' ? 'bg-white shadow-xs text-stone-800' : 'text-stone-500 hover:text-stone-700'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">blender</span>
+                <span className="hidden sm:inline">Gom Món</span>
+              </button>
+            </div>
             <button
               onClick={handleToggleSound}
               className={`h-9 px-3 rounded-xl border flex items-center gap-1.5 font-semibold transition-colors ${
@@ -266,7 +330,8 @@ export const KdsTerminalPage: React.FC<KdsTerminalPageProps> = ({ onNavigate, on
 
       {/* Ticket Canvas */}
       <div className="p-4 sm:p-6 w-full flex-1">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start">
+        {viewMode === 'by-order' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 items-start">
           {tickets.map(ticket => {
             const isCompleted = ticket.type === 'completed';
 
@@ -431,6 +496,72 @@ export const KdsTerminalPage: React.FC<KdsTerminalPageProps> = ({ onNavigate, on
             );
           })}
         </div>
+        ) : (
+          <div className="max-w-4xl mx-auto space-y-4 animate-in fade-in">
+            {groupedItems.map((group, idx) => {
+              const isHighVolume = group.totalQty >= 3 && group.doneQty < group.totalQty;
+              return (
+              <div key={idx} className={`bg-white rounded-2xl border p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition-all ${
+                group.doneQty === group.totalQty ? 'border-stone-200 bg-stone-50 opacity-60' : 
+                isHighVolume ? 'border-rose-300 ring-1 ring-rose-500/20 bg-rose-50/30' : 'border-stone-300'
+              }`}>
+                <div className="flex items-center gap-4">
+                  <div className={`w-14 h-14 rounded-xl flex items-center justify-center font-bold text-xl font-mono shrink-0 ${
+                    isHighVolume ? 'bg-rose-100 text-rose-700' : 'bg-primary/10 text-primary'
+                  }`}>
+                    x{group.totalQty}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-stone-900">{group.name}</h3>
+                      {isHighVolume && (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-rose-600 text-white animate-pulse">
+                          🔥 Ưu tiên làm trước
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mt-1.5">
+                      {group.tags.map((tg, i) => (
+                        <span key={i} className="px-2 py-0.5 rounded bg-stone-100 text-[11px] text-stone-700 border border-stone-200 font-medium">
+                          {tg}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <span className="text-[11px] text-stone-500 font-semibold uppercase tracking-wider">Từ các đơn:</span>
+                      {group.ticketCodes.map((code, i) => (
+                        <span key={i} className="text-[11px] font-mono text-primary bg-primary/5 px-1.5 rounded border border-primary/20">
+                          #{code}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {group.doneQty < group.totalQty ? (
+                  <button 
+                    onClick={() => handleCompleteBatch(group.name, group.tags)}
+                    className="shrink-0 h-12 px-6 rounded-xl bg-primary text-white font-bold hover:bg-primary-container shadow-2xs flex items-center gap-2 cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[20px]">done_all</span>
+                    Hoàn tất lô ({group.totalQty} ly)
+                  </button>
+                ) : (
+                  <div className="shrink-0 h-12 px-6 rounded-xl bg-stone-200 text-stone-500 font-bold flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[20px]">check_circle</span>
+                    Đã xong
+                  </div>
+                )}
+              </div>
+              );
+            })}
+            {groupedItems.length === 0 && (
+              <div className="text-center py-12 text-stone-500 font-medium">
+                Không có món nào đang chờ pha chế.
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Recall Modal */}

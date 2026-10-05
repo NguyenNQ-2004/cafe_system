@@ -371,17 +371,7 @@ export const FeedbackPage: React.FC<FeedbackPageProps> = ({
                             Kết quả bồi hoàn
                           </div>
                           <p className="text-[11px] leading-relaxed">{ticket.resolution}</p>
-                          {ticket.giftVoucher && (
-                            <div className="mt-2 flex items-center justify-between bg-emerald-50 p-2 rounded border border-dashed border-emerald-300">
-                              <span className="font-mono font-bold text-emerald-800 text-xs">{ticket.giftVoucher}</span>
-                              <button 
-                                onClick={() => onShowToast?.(`Đã sao chép voucher ${ticket.giftVoucher}`)}
-                                className="text-[11px] text-emerald-700 font-semibold hover:underline"
-                              >
-                                Sao chép mã
-                              </button>
-                            </div>
-                          )}
+
                         </div>
                       )}
 

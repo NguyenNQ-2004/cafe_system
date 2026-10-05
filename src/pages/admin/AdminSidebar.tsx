@@ -93,6 +93,26 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ currentRoute, onNavi
               <span className="material-symbols-outlined text-[18px]">science</span>
               <span>24. Định mức nguyên liệu</span>
             </button>
+            <button
+              onClick={() => onNavigate('admin-suppliers')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${currentRoute === 'admin-suppliers'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">local_shipping</span>
+              <span>24a. Nhà cung cấp</span>
+            </button>
+            <button
+              onClick={() => onNavigate('admin-purchases')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${currentRoute === 'admin-purchases'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">receipt_long</span>
+              <span>24b. Phiếu mua hàng</span>
+            </button>
           </div>
 
           {/* Section 4: Nhân Sự & Ca Làm */}
@@ -109,14 +129,59 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ currentRoute, onNavi
               <span>25. Danh sách nhân sự</span>
             </button>
             <button
+              onClick={() => onNavigate('admin-shifts')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${currentRoute === 'admin-shifts'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">schedule</span>
+              <span>26. Cấu hình ca làm</span>
+            </button>
+            <button
+              onClick={() => onNavigate('admin-schedules')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${currentRoute === 'admin-schedules'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">calendar_month</span>
+              <span>27. Xếp lịch nhân viên</span>
+            </button>
+            <button
               onClick={() => onNavigate('admin-attendance')}
               className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${currentRoute === 'admin-attendance'
                   ? 'bg-primary text-white shadow-xs'
                   : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
                 }`}
             >
-              <span className="material-symbols-outlined text-[18px]">badge</span>
-              <span>26. Phân ca & Chấm công</span>
+              <span className="material-symbols-outlined text-[18px]">how_to_reg</span>
+              <span>28. Quản lý chấm công</span>
+            </button>
+          </div>
+
+          {/* Section 5: Khách Hàng & CRM */}
+          <div className="space-y-1">
+            <p className="px-2 text-[10px] text-stone-400 uppercase tracking-wider font-bold">Khách Hàng & CRM</p>
+            <button
+              onClick={() => onNavigate('admin-customers')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${currentRoute === 'admin-customers'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">contact_page</span>
+              <span>29. Khách hàng</span>
+            </button>
+            <button
+              onClick={() => onNavigate('admin-complaints')}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-left transition-colors ${currentRoute === 'admin-complaints'
+                  ? 'bg-primary text-white shadow-xs'
+                  : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+                }`}
+            >
+              <span className="material-symbols-outlined text-[18px]">feedback</span>
+              <span>30. Xử lý khiếu nại</span>
             </button>
           </div>
         </nav>

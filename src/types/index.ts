@@ -16,7 +16,6 @@ export type PageRoute =
   | 'feedback'
   | 'pos-shift'
   | 'pos-handover'
-  | 'kds-recipe'
   | 'delivery-report'
   | 'delivery-cod'
   | 'admin-ingredients'
@@ -26,9 +25,15 @@ export type PageRoute =
   | 'admin-products'
   | 'admin-stock'
   | 'admin-orders'
-  | 'admin-vouchers'
   | 'admin-users'
   | 'admin-attendance'
+  | 'admin-shifts'
+  | 'admin-schedules'
+  | 'admin-suppliers'
+  | 'admin-purchases'
+  | 'admin-customers'
+  | 'admin-memberships'
+  | 'admin-complaints'
   | 'admin-settings';
 
 // =========================================
@@ -104,7 +109,6 @@ export interface FeedbackTicket {
   agentName?: string;
   agentNote?: string;
   resolution?: string;
-  giftVoucher?: string;
 }
 
 export interface UserProfile {
@@ -213,24 +217,11 @@ export interface DbProductVariant {
   is_active: boolean;
 }
 
-export interface DbVoucher {
-  voucher_id: number;
-  code: string;
-  description?: string;
-  discount_type: 'PERCENT' | 'FIXED';
-  discount_value: number;
-  start_at?: string;
-  end_at?: string;
-  usage_limit?: number;
-  is_active: boolean;
-}
-
 export interface DbOrder {
   order_id: number;
   order_code: string;
   user_id?: number;
   created_by_employee_id?: number;
-  voucher_id?: number;
   order_type: 'ONLINE' | 'COUNTER';
   order_status: 'PENDING' | 'CONFIRMED' | 'PREPARING' | 'READY' | 'DELIVERING' | 'COMPLETED' | 'CANCELLED';
   order_date: string;

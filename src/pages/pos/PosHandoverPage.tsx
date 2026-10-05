@@ -393,7 +393,7 @@ export const PosHandoverPage: React.FC<PosHandoverPageProps> = ({ onNavigate, on
                   Ghi chú ca sáng:
                 </span>
                 <p className="text-stone-600 text-[11px] leading-relaxed">
-                  "Đá viên dự trữ đầy đủ, voucher chương trình Chào Thu đã phát hết 50 tờ, nguyên liệu sữa tươi đóng mở ca trước 13:00."
+                  "Đá viên dự trữ đầy đủ, nguyên liệu sữa tươi đóng mở ca trước 13:00."
                 </p>
               </div>
             </div>

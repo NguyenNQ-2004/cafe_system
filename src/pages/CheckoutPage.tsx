@@ -3,14 +3,14 @@ import { PageRoute, CartItem } from '../types';
 
 interface CheckoutPageProps {
   cartItems: CartItem[];
-  appliedVoucher: string | null;
-  onNavigate: (route: PageRoute) => void;
+  pointsToRedeem: number;
+  onNavigate: (PageRoute) => void;
   onOrderDetailsReady?: (details: any) => void;
 }
 
 export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   cartItems,
-  appliedVoucher,
+  pointsToRedeem,
   onNavigate,
   onOrderDetailsReady
 }) => {
@@ -27,9 +27,9 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
   // Calculations
   const checkedItems = cartItems.filter((i) => i.checked !== false);
   const subtotal = checkedItems.reduce((acc, i) => acc + i.unitPrice * i.quantity, 0);
-  const shippingFee = fulfillmentMode === 'pickup' ? 0 : appliedVoucher === 'FREESHIP' ? 0 : 18000;
-  const voucherDiscount = appliedVoucher === 'WELCOME50K' ? 50000 : 0;
-  const grandTotal = Math.max(0, subtotal + shippingFee - voucherDiscount);
+  const shippingFee = fulfillmentMode === 'pickup' ? 0 : 18000;
+  const pointsDiscount = pointsToRedeem;
+  const grandTotal = Math.max(0, subtotal + shippingFee - pointsDiscount);
 
   const formatPrice = (amount: number) => {
     return new Intl.NumberFormat('vi-VN').format(amount) + 'đ';
@@ -489,14 +489,14 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({
                   </span>
                 </div>
 
-                {voucherDiscount > 0 && (
+                {pointsDiscount > 0 && (
                   <div className="flex justify-between items-center text-on-surface-variant font-body-md text-body-md">
                     <div className="flex items-center gap-1 text-primary">
-                      <span className="material-symbols-outlined text-[16px]">sell</span>
-                      <span>Voucher giảm giá ({appliedVoucher})</span>
+                      <span className="material-symbols-outlined text-[16px]">stars</span>
+                      <span>Thanh toán bằng điểm</span>
                     </div>
                     <span className="font-tabular-data text-tabular-data font-medium text-primary">
-                      -{formatPrice(voucherDiscount)}
+                      -{formatPrice(pointsDiscount)}
                     </span>
                   </div>
                 )}

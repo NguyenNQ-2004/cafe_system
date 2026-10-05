@@ -9,8 +9,7 @@ interface ProfilePageProps {
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, onShowToast }) => {
   const [user, setUser] = useState<UserProfile>(INITIAL_USER);
-  const [activeTab, setActiveTab] = useState<'rewards' | 'history' | 'benefits' | 'account'>('rewards');
-  const [redeemedVouchers, setRedeemedVouchers] = useState<string[]>([]);
+  const [activeTab, setActiveTab] = useState<'history' | 'account'>('history');
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: user.name,
@@ -21,44 +20,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, onShowToas
     address: user.address,
   });
 
-  const rewards = [
-    {
-      id: 'r1',
-      title: 'Voucher Giảm 15.000đ cho đơn từ 60.000đ',
-      points: 100,
-      badge: 'Phổ biến',
-      expiry: 'HSD: 30 ngày kể từ ngày đổi',
-      icon: 'local_activity',
-      available: true
-    },
-    {
-      id: 'r2',
-      title: 'Free 01 Bánh Croissant Bơ Pháp khi mua đồ uống',
-      points: 180,
-      badge: 'Best match',
-      expiry: 'HSD: 14 ngày kể từ ngày đổi',
-      icon: 'bakery_dining',
-      available: true
-    },
-    {
-      id: 'r3',
-      title: 'Voucher Giảm 50.000đ hóa đơn cà phê rang xay',
-      points: 300,
-      badge: 'Hạng Vàng',
-      expiry: 'HSD: 45 ngày',
-      icon: 'card_giftcard',
-      available: true
-    },
-    {
-      id: 'r4',
-      title: 'Ly giữ nhiệt Aura Eco Tumbler 500ml Edition',
-      points: 600,
-      badge: 'Quà tặng hiện vật',
-      expiry: 'Nhận tại quầy Aura bất kỳ',
-      icon: 'coffee',
-      available: false
-    }
-  ];
 
   const pointHistories = [
     {
@@ -80,7 +41,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, onShowToas
     {
       id: 'h3',
       date: '10/10/2024 19:10',
-      action: 'Đổi E-Voucher Freeship 25k #VCH-FS25',
+      action: 'Thanh toán bằng điểm cho đơn hàng #AUR-12435',
       points: '-150',
       type: 'minus',
       balance: '269 pts'
@@ -103,15 +64,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, onShowToas
     }
   ];
 
-  const handleRedeem = (id: string, cost: number, title: string) => {
-    if (user.points < cost) {
-      onShowToast?.('Bạn chưa đủ điểm tích luỹ để đổi phần quà này!');
-      return;
-    }
-    setUser(prev => ({ ...prev, points: prev.points - cost }));
-    setRedeemedVouchers(prev => [...prev, id]);
-    onShowToast?.(`Đã đổi thành công quà: "${title}". Kiểm tra tại Giỏ hàng hoặc Ví voucher!`);
-  };
 
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,9 +88,9 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, onShowToas
         </div>
 
         {/* Top Hero: Member Card & Quick Status */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div className="mb-8">
           {/* Card Digital VIP */}
-          <div className="lg:col-span-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#730815] via-[#900b1a] to-[#45020a] p-6 sm:p-8 text-white shadow-xl">
+          <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#730815] via-[#900b1a] to-[#45020a] p-6 sm:p-8 text-white shadow-xl">
             <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white/5 blur-2xl pointer-events-none" />
             <div className="absolute bottom-0 left-1/3 -mb-16 w-48 h-48 rounded-full bg-amber-400/10 blur-xl pointer-events-none" />
 
@@ -205,64 +157,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, onShowToas
               </div>
             </div>
           </div>
-
-          {/* Barcode & Counter Scanning card */}
-          <div className="bg-white rounded-2xl p-6 border border-stone-200/70 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-bold text-stone-900 text-sm flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-[20px]">qr_code_2</span>
-                  Mã tích điểm tại quầy
-                </h3>
-                <span className="text-[11px] text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full font-medium border border-emerald-200">
-                  Tự động làm mới
-                </span>
-              </div>
-
-              <div className="bg-stone-50 border border-dashed border-stone-300 rounded-xl p-4 flex flex-col items-center justify-center my-2">
-                {/* Simulated Barcode */}
-                <div className="w-full flex justify-center items-center py-2 px-3 bg-white rounded-lg shadow-inner">
-                  <div className="flex items-center justify-center gap-[3px] h-14 w-full max-w-[200px]">
-                    {[4,2,6,1,3,7,2,5,3,1,6,4,2,3,5,2,4,7,3,2,6,1,4,5,2].map((w, idx) => (
-                      <div 
-                        key={idx} 
-                        className="bg-stone-900 h-full rounded-xs" 
-                        style={{ width: `${w * 1.5}px` }} 
-                      />
-                    ))}
-                  </div>
-                </div>
-                <p className="font-mono text-xs tracking-[0.25em] text-stone-700 mt-2 font-bold">
-                  893456799810
-                </p>
-                <p className="text-[11px] text-stone-500 mt-1 text-center">
-                  Đưa thu ngân quét mã để tích điểm hoặc áp dụng ưu đãi hội viên
-                </p>
-              </div>
-            </div>
-
-            <div className="pt-3 border-t border-stone-100 flex items-center justify-between text-xs text-stone-600">
-              <span className="flex items-center gap-1.5">
-                <span className="material-symbols-outlined text-[16px] text-primary">verified_user</span>
-                Bảo mật mã OTP 1-time
-              </span>
-              <button 
-                onClick={() => onShowToast?.('Mã quét đã được làm mới an toàn!')}
-                className="text-primary hover:underline font-medium flex items-center gap-1"
-              >
-                <span className="material-symbols-outlined text-[14px]">refresh</span>
-                Làm mới
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Tab navigation */}
         <div className="bg-white rounded-xl border border-stone-200/80 p-1.5 mb-6 shadow-xs flex flex-wrap gap-1">
           {[
-            { id: 'rewards', label: 'Đổi quà & Ưu đãi', icon: 'redeem' },
             { id: 'history', label: 'Lịch sử tích điểm', icon: 'history' },
-            { id: 'benefits', label: 'Đặc quyền thứ hạng', icon: 'military_tech' },
             { id: 'account', label: 'Thông tin tài khoản', icon: 'manage_accounts' },
           ].map(tab => (
             <button
@@ -280,74 +180,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, onShowToas
           ))}
         </div>
 
-        {/* Tab 1: Rewards Store */}
-        {activeTab === 'rewards' && (
-          <div>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <div>
-                <h3 className="text-lg font-bold text-stone-900">Gian hàng đổi điểm Aura Rewards</h3>
-                <p className="text-xs text-stone-500">Đổi điểm tích luỹ lấy voucher giảm giá và quà tặng thương hiệu</p>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-stone-500">Số điểm hiện có:</span>
-                <span className="px-2.5 py-1 rounded-md bg-primary/10 text-primary font-bold">
-                  {user.points} pts
-                </span>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {rewards.map(item => {
-                const isRedeemed = redeemedVouchers.includes(item.id);
-                const canAfford = user.points >= item.points;
-
-                return (
-                  <div 
-                    key={item.id}
-                    className="bg-white rounded-xl border border-stone-200/80 p-5 shadow-xs flex flex-col justify-between hover:shadow-md transition-shadow"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-2 mb-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
-                          <span className="material-symbols-outlined">{item.icon}</span>
-                        </div>
-                        <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-stone-100 text-stone-700">
-                          {item.badge}
-                        </span>
-                      </div>
-
-                      <h4 className="font-bold text-stone-900 text-sm line-clamp-2 mb-2">
-                        {item.title}
-                      </h4>
-                      <p className="text-[11px] text-stone-500 mb-4">{item.expiry}</p>
-                    </div>
-
-                    <div className="pt-3 border-t border-stone-100 flex items-center justify-between">
-                      <div>
-                        <span className="text-xs text-stone-500">Điểm cần:</span>
-                        <p className="font-extrabold text-primary text-base">{item.points} pts</p>
-                      </div>
-
-                      <button
-                        onClick={() => handleRedeem(item.id, item.points, item.title)}
-                        disabled={isRedeemed || !canAfford || !item.available}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                          isRedeemed
-                            ? 'bg-emerald-100 text-emerald-800 cursor-default'
-                            : canAfford && item.available
-                            ? 'bg-primary text-white hover:bg-primary-container shadow-xs active:scale-95'
-                            : 'bg-stone-100 text-stone-400 cursor-not-allowed'
-                        }`}
-                      >
-                        {isRedeemed ? 'Đã đổi' : !item.available ? 'Hết hàng' : canAfford ? 'Đổi ngay' : 'Thiếu điểm'}
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
         {/* Tab 2: Point History */}
         {activeTab === 'history' && (
@@ -397,99 +229,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ onNavigate, onShowToas
           </div>
         )}
 
-        {/* Tab 3: Tier Benefits */}
-        {activeTab === 'benefits' && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Silver */}
-            <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-xs relative">
-              <div className="w-10 h-10 rounded-xl bg-stone-100 text-stone-600 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined">workspace_premium</span>
-              </div>
-              <h4 className="font-bold text-base text-stone-900">Hạng Bạc (Silver)</h4>
-              <p className="text-xs text-stone-500 mb-4">Dành cho khách hàng mới gia nhập</p>
-              <div className="text-sm font-bold text-stone-800 pb-3 border-b border-stone-100 mb-4">
-                0 - 299 Điểm tích lũy
-              </div>
-              <ul className="space-y-3 text-xs text-stone-600">
-                <li className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-emerald-600 text-[16px]">check_circle</span>
-                  <span>Tích luỹ 5% trên mỗi hóa đơn thanh toán</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-emerald-600 text-[16px]">check_circle</span>
-                  <span>Tặng E-voucher 20.000đ mừng gia nhập</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-emerald-600 text-[16px]">check_circle</span>
-                  <span>Nhận tin ưu đãi độc quyền qua ứng dụng</span>
-                </li>
-              </ul>
-            </div>
 
-            {/* Gold (Current) */}
-            <div className="bg-gradient-to-b from-amber-50/50 to-white rounded-2xl border-2 border-amber-400 p-6 shadow-md relative">
-              <div className="absolute top-4 right-4 px-2 py-0.5 rounded-full bg-amber-400 text-stone-900 text-[10px] font-bold uppercase">
-                Hạng hiện tại của bạn
-              </div>
-              <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined">stars</span>
-              </div>
-              <h4 className="font-bold text-base text-stone-900">Hạng Vàng (Gold)</h4>
-              <p className="text-xs text-stone-500 mb-4">Dành cho tín đồ cà phê Aura thân thiết</p>
-              <div className="text-sm font-bold text-amber-700 pb-3 border-b border-amber-200 mb-4">
-                300 - 799 Điểm tích lũy
-              </div>
-              <ul className="space-y-3 text-xs text-stone-700">
-                <li className="flex items-start gap-2 font-medium">
-                  <span className="material-symbols-outlined text-amber-600 text-[16px]">check_circle</span>
-                  <span>Tích luỹ 10% trên mỗi đơn hàng</span>
-                </li>
-                <li className="flex items-start gap-2 font-medium">
-                  <span className="material-symbols-outlined text-amber-600 text-[16px]">check_circle</span>
-                  <span>Tặng 01 bánh ngọt miễn phí vào tháng sinh nhật</span>
-                </li>
-                <li className="flex items-start gap-2 font-medium">
-                  <span className="material-symbols-outlined text-amber-600 text-[16px]">check_circle</span>
-                  <span>Miễn phí nâng cấp kích cỡ ly (Upsize) thứ 3 hàng tuần</span>
-                </li>
-                <li className="flex items-start gap-2 font-medium">
-                  <span className="material-symbols-outlined text-amber-600 text-[16px]">check_circle</span>
-                  <span>Ưu tiên pha chế và xử lý đơn hỏa tốc</span>
-                </li>
-              </ul>
-            </div>
-
-            {/* Diamond */}
-            <div className="bg-white rounded-2xl border border-stone-200 p-6 shadow-xs relative">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined">diamond</span>
-              </div>
-              <h4 className="font-bold text-base text-stone-900">Hạng Kim Cương (Diamond)</h4>
-              <p className="text-xs text-stone-500 mb-4">Đặc quyền tối thượng dành riêng cho VIP</p>
-              <div className="text-sm font-bold text-purple-700 pb-3 border-b border-stone-100 mb-4">
-                Từ 800 Điểm trở lên
-              </div>
-              <ul className="space-y-3 text-xs text-stone-600">
-                <li className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-purple-600 text-[16px]">check_circle</span>
-                  <span>Tích luỹ 15% không giới hạn giá trị</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-purple-600 text-[16px]">check_circle</span>
-                  <span>Miễn phí giao hàng trọn đời mọi đơn từ 50k</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-purple-600 text-[16px]">check_circle</span>
-                  <span>Mời tham dự workshop thử nếm cà phê đặc sản cao cấp</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="material-symbols-outlined text-purple-600 text-[16px]">check_circle</span>
-                  <span>Đường dây nóng CSKH hỗ trợ riêng biệt 24/7</span>
-                </li>
-              </ul>
-            </div>
-          </div>
-        )}
 
         {/* Tab 4: Account Information */}
         {activeTab === 'account' && (

@@ -312,8 +312,7 @@ export const INITIAL_FEEDBACK_TICKETS: FeedbackTicket[] = [
     status: 'resolved',
     statusLabel: 'Đã giải quyết xong',
     progressPercent: 100,
-    resolution: 'Aura chân thành xin lỗi quý khách về sự bất tiện trên. Cửa hàng đã kiểm điểm khâu kiểm tra trước khi bàn giao cho shipper và xin gửi tặng E-voucher 30.000đ trực tiếp vào ví Aura Rewards của bạn.',
-    giftVoucher: '#AURA-CARE-30K'
+    resolution: 'Aura chân thành xin lỗi quý khách về sự bất tiện trên. Cửa hàng đã kiểm điểm khâu kiểm tra trước khi bàn giao cho shipper và xin gửi tặng 300 điểm thưởng trực tiếp vào tài khoản Aura Rewards của bạn.',
   }
 ];
 
