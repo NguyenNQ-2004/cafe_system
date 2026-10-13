@@ -4,7 +4,7 @@ import { PageRoute, CartItem } from '../types';
 interface CheckoutPageProps {
   cartItems: CartItem[];
   pointsToRedeem: number;
-  onNavigate: (PageRoute) => void;
+  onNavigate: (route: PageRoute) => void;
   onOrderDetailsReady?: (details: any) => void;
 }
 

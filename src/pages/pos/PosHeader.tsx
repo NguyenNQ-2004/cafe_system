@@ -64,10 +64,9 @@ export const PosHeader: React.FC<PosHeaderProps> = ({ currentRoute, onNavigate, 
         {/* Navigation Tabs */}
         <nav className="flex items-center gap-1 overflow-x-auto py-1">
           {[
-            { id: 'pos-create', label: 'Tạo đơn tại quầy', icon: 'point_of_sale' },
-            { id: 'pos-orders', label: 'Quản lý đơn quầy', icon: 'receipt_long' },
-            { id: 'pos-shift', label: 'Quản lý ca', icon: 'savings' },
-            { id: 'pos-handover', label: 'Bàn giao ca', icon: 'assignment_turned_in' },
+            { id: 'pos-create', label: 'Screen 8: Counter Ordering', icon: 'point_of_sale' },
+            { id: 'pos-orders', label: 'Screen 12: Order List', icon: 'receipt_long' },
+            { id: 'pos-handover', label: 'Screen 27: Shift Handover', icon: 'assignment_turned_in' },
           ].map(tab => {
             const active = currentRoute === tab.id;
             return (

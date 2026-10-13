@@ -18,7 +18,7 @@ export const KdsHeader: React.FC<KdsHeaderProps> = ({ currentRoute, onNavigate }
               Aura Café
             </span>
             <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
-              BARISTA KDS TERMINAL
+              Screen 13 • Barista KDS Terminal (UC22, UC23)
             </span>
           </div>
 

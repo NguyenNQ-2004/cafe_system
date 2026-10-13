@@ -215,12 +215,14 @@ export const PosOrdersPage: React.FC<PosOrdersPageProps> = ({ onNavigate, onShow
       <div className="w-full px-4 sm:px-6 py-4 bg-white shadow-2xs border-b border-stone-200 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full xl:w-auto">
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
-              <span className="text-[11px] text-primary uppercase font-bold tracking-wider">
-                Phiên làm việc POS 02
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span className="px-2.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold">
+                Screen 12 • Counter Order List (UC19, UC20, UC21, UC59)
               </span>
-              <span className="text-stone-400 font-mono text-xs">/ Ca Sáng</span>
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse ml-1" />
+              <span className="text-[11px] text-stone-500 uppercase font-bold tracking-wider">
+                Phiên POS 02 / Ca Sáng
+              </span>
             </div>
             <div className="flex items-baseline gap-2 mt-0.5">
               <h1 className="text-xl sm:text-2xl font-bold text-stone-900">Quản lý Đơn tại Quầy</h1>

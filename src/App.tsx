@@ -35,12 +35,15 @@ import { KdsTerminalPage } from './pages/kds/KdsTerminalPage';
 import { DeliveryOrdersPage } from './pages/delivery/DeliveryOrdersPage';
 import { DeliveryProblemPage } from './pages/delivery/DeliveryProblemPage';
 import { DeliveryCodPage } from './pages/delivery/DeliveryCodPage';
+import { BillPage } from './pages/BillPage';
 
 // Admin ERP Pages
 import { AdminDashboardPage } from './pages/admin/AdminDashboardPage';
 import { AdminCategoriesPage } from './pages/admin/AdminCategoriesPage';
 import { AdminProductsPage } from './pages/admin/AdminProductsPage';
+import { AdminRecipesPage } from './pages/admin/AdminRecipesPage';
 import { AdminStockPage } from './pages/admin/AdminStockPage';
+import { AdminRestockPage } from './pages/admin/AdminRestockPage';
 import { AdminIngredientsPage } from './pages/admin/AdminIngredientsPage';
 import { AdminSuppliersPage } from './pages/admin/AdminSuppliersPage';
 import { AdminPurchasesPage } from './pages/admin/AdminPurchasesPage';
@@ -49,6 +52,7 @@ import { AdminShiftsPage } from './pages/admin/AdminShiftsPage';
 import { AdminSchedulesPage } from './pages/admin/AdminSchedulesPage';
 import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
+import { AdminMembershipsPage } from './pages/admin/AdminMembershipsPage';
 import { AdminComplaintsPage } from './pages/admin/AdminComplaintsPage';
 
 export default function App() {
@@ -188,10 +192,10 @@ export default function App() {
 
   // Determine if current route is a customer route
   const isCustomerRoute = [
-    'home', 'menu', 'customize', 'cart', 'checkout', 'payment', 'orders', 'profile', 'feedback'
+    'home', 'menu', 'customize', 'cart', 'checkout', 'payment', 'bill', 'orders', 'profile', 'feedback'
   ].includes(currentRoute);
 
-  // Available application screens organized by system module
+  // Available application screens organized strictly by Screen 1 -> Screen 31
   const allScreens: {
     route: PageRoute | 'auth-modal';
     label: string;
@@ -199,47 +203,38 @@ export default function App() {
     icon: string;
     role: 'customer' | 'pos' | 'kds' | 'delivery' | 'admin';
   }[] = [
-      { route: 'auth-modal', label: 'Authentication Screen', tag: 'Screen 1', icon: 'login', role: 'customer' },
-      // 1. Khách hàng
-      { route: 'home', label: 'Homepage Screen', tag: 'Screen 3', icon: 'storefront', role: 'customer' },
-      { route: 'menu', label: 'Menu Screen', tag: 'Screen 4', icon: 'menu_book', role: 'customer' },
-      { route: 'customize', label: 'Product Detail Screen', tag: 'Screen 5', icon: 'tune', role: 'customer' },
-      { route: 'cart', label: 'Shopping Cart Screen', tag: 'Screen 6', icon: 'shopping_bag', role: 'customer' },
-      { route: 'checkout', label: 'Online Ordering Screen', tag: 'Screen 7', icon: 'local_shipping', role: 'customer' },
-      { route: 'payment', label: 'Payment Screen', tag: 'Screen 9', icon: 'qr_code_2', role: 'customer' },
-      { route: 'orders', label: 'Order Management Screen', tag: 'Screen 11', icon: 'moped', role: 'customer' },
-      { route: 'profile', label: 'Customer Profile Screen', tag: 'Screen 2', icon: 'workspace_premium', role: 'customer' },
-      { route: 'payment', label: 'Bill Screen', tag: 'Screen 10', icon: 'receipt', role: 'customer' },
-      { route: 'profile', label: 'Loyalty Points Management Screen', tag: 'Screen 29', icon: 'loyalty', role: 'customer' },
-
-      // 2. Thu ngân POS
-      { route: 'pos-create', label: 'Counter Ordering Screen', tag: 'Screen 8', icon: 'point_of_sale', role: 'pos' },
-      { route: 'pos-orders', label: 'Counter Order List Screen', tag: 'Screen 12', icon: 'receipt_long', role: 'pos' },
-      { route: 'pos-shift', label: 'Shift Cash Reconciliation Screen', tag: 'Screen 27', icon: 'savings', role: 'pos' },
-
-      // 3. Barista KDS
-      { route: 'kds-terminal', label: 'Drink Preparation Screen', tag: 'Screen 13', icon: 'blender', role: 'kds' },
-
-      // 4. Đội giao hàng Delivery
-      { route: 'delivery-orders', label: 'Delivery Management Screen', tag: 'Screen 14', icon: 'directions_bike', role: 'delivery' },
-
-      // 5. Quản trị chuỗi Admin ERP
-      { route: 'admin-overview', label: 'Reports Dashboard', tag: 'Screen 31', icon: 'dashboard', role: 'admin' },
-      { route: 'admin-categories', label: 'Category Management Screen', tag: 'Screen 15', icon: 'category', role: 'admin' },
-      { route: 'admin-products', label: 'Product Management Screen', tag: 'Screen 16', icon: 'local_cafe', role: 'admin' },
-      { route: 'admin-stock', label: 'Inventory Management Screen', tag: 'Screen 19', icon: 'inventory_2', role: 'admin' },
-      { route: 'admin-ingredients', label: 'Ingredient Management Screen', tag: 'Screen 18', icon: 'shelves', role: 'admin' },
-      { route: 'admin-ingredients', label: 'Product Recipe & BOM Management Screen', tag: 'Screen 17', icon: 'menu_book', role: 'admin' },
-      { route: 'admin-stock', label: 'Inventory Transaction History Screen', tag: 'Screen 20', icon: 'history', role: 'admin' },
-      { route: 'admin-suppliers', label: 'Supplier Management Screen', tag: 'Screen 21', icon: 'local_shipping', role: 'admin' },
-      { route: 'admin-purchases', label: 'Purchase Order Management Screen', tag: 'Screen 22', icon: 'receipt_long', role: 'admin' },
-      { route: 'admin-users', label: 'Employee Management Screen', tag: 'Screen 23', icon: 'group', role: 'admin' },
-      { route: 'admin-shifts', label: 'Work Shift Management Screen', tag: 'Screen 24', icon: 'schedule', role: 'admin' },
-      { route: 'admin-schedules', label: 'Employee Schedule Screen', tag: 'Screen 25', icon: 'calendar_month', role: 'admin' },
-      { route: 'admin-attendance', label: 'Attendance Management Screen', tag: 'Screen 26', icon: 'badge', role: 'admin' },
-      { route: 'admin-customers', label: 'Customer Management Screen', tag: 'Screen 28', icon: 'contact_page', role: 'admin' },
-      { route: 'admin-complaints', label: 'Feedback & Complaint Management Screen', tag: 'Screen 30', icon: 'feedback', role: 'admin' },
-    ];
+    { route: 'auth-modal', label: 'Authentication Screen', tag: 'Screen 1', icon: 'login', role: 'customer' },
+    { route: 'profile', label: 'Customer Profile Screen', tag: 'Screen 2', icon: 'account_circle', role: 'customer' },
+    { route: 'home', label: 'Homepage Screen', tag: 'Screen 3', icon: 'storefront', role: 'customer' },
+    { route: 'menu', label: 'Menu Screen', tag: 'Screen 4', icon: 'menu_book', role: 'customer' },
+    { route: 'customize', label: 'Product Detail Screen', tag: 'Screen 5', icon: 'tune', role: 'customer' },
+    { route: 'cart', label: 'Shopping Cart Screen', tag: 'Screen 6', icon: 'shopping_bag', role: 'customer' },
+    { route: 'checkout', label: 'Online Ordering Screen', tag: 'Screen 7', icon: 'local_shipping', role: 'customer' },
+    { route: 'pos-create', label: 'Counter Ordering Screen', tag: 'Screen 8', icon: 'point_of_sale', role: 'pos' },
+    { route: 'payment', label: 'Payment Screen', tag: 'Screen 9', icon: 'qr_code_2', role: 'customer' },
+    { route: 'bill', label: 'Bill Screen', tag: 'Screen 10', icon: 'receipt', role: 'customer' },
+    { route: 'orders', label: 'Order Management Screen', tag: 'Screen 11', icon: 'moped', role: 'customer' },
+    { route: 'pos-orders', label: 'Counter Order List Screen', tag: 'Screen 12', icon: 'receipt_long', role: 'pos' },
+    { route: 'kds-terminal', label: 'Drink Preparation Screen', tag: 'Screen 13', icon: 'blender', role: 'kds' },
+    { route: 'delivery-orders', label: 'Delivery Management Screen', tag: 'Screen 14', icon: 'directions_bike', role: 'delivery' },
+    { route: 'admin-categories', label: 'Category Management Screen', tag: 'Screen 15', icon: 'category', role: 'admin' },
+    { route: 'admin-products', label: 'Product Management Screen', tag: 'Screen 16', icon: 'local_cafe', role: 'admin' },
+    { route: 'admin-recipes', label: 'Recipe Management Screen', tag: 'Screen 17', icon: 'menu_book', role: 'admin' },
+    { route: 'admin-ingredients', label: 'Ingredient Management Screen', tag: 'Screen 18', icon: 'shelves', role: 'admin' },
+    { route: 'admin-stock', label: 'Inventory Management Screen', tag: 'Screen 19', icon: 'inventory_2', role: 'admin' },
+    { route: 'admin-restock', label: 'Restock Request Screen', tag: 'Screen 20', icon: 'add_alert', role: 'admin' },
+    { route: 'admin-suppliers', label: 'Supplier Management Screen', tag: 'Screen 21', icon: 'local_shipping', role: 'admin' },
+    { route: 'admin-purchases', label: 'Purchase Order Screen', tag: 'Screen 22', icon: 'receipt_long', role: 'admin' },
+    { route: 'admin-users', label: 'Employee Management Screen', tag: 'Screen 23', icon: 'group', role: 'admin' },
+    { route: 'admin-shifts', label: 'Work Shift Management Screen', tag: 'Screen 24', icon: 'schedule', role: 'admin' },
+    { route: 'admin-schedules', label: 'Employee Schedule Screen', tag: 'Screen 25', icon: 'calendar_month', role: 'admin' },
+    { route: 'admin-attendance', label: 'Attendance Management Screen', tag: 'Screen 26', icon: 'badge', role: 'admin' },
+    { route: 'pos-handover', label: 'Shift Handover Screen', tag: 'Screen 27', icon: 'savings', role: 'pos' },
+    { route: 'admin-customers', label: 'Customer Management Screen', tag: 'Screen 28', icon: 'contact_page', role: 'admin' },
+    { route: 'admin-memberships', label: 'Phone Loyalty Management Screen', tag: 'Screen 29', icon: 'loyalty', role: 'admin' },
+    { route: 'admin-complaints', label: 'Feedback & Complaint Management Screen', tag: 'Screen 30', icon: 'feedback', role: 'admin' },
+    { route: 'admin-overview', label: 'Reports Dashboard', tag: 'Screen 31', icon: 'dashboard', role: 'admin' },
+  ];
 
   const filteredScreens = allScreens.filter(
     s => navRoleFilter === 'all' || s.role === navRoleFilter
@@ -308,6 +303,12 @@ export default function App() {
           <PaymentPage
             onNavigate={handleNavigate}
             onPaymentComplete={handlePaymentComplete}
+          />
+        )}
+        {currentRoute === 'bill' && (
+          <BillPage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
           />
         )}
         {currentRoute === 'orders' && (
@@ -405,8 +406,20 @@ export default function App() {
             onShowToast={showToast}
           />
         )}
+        {currentRoute === 'admin-recipes' && (
+          <AdminRecipesPage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
+          />
+        )}
         {currentRoute === 'admin-stock' && (
           <AdminStockPage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
+          />
+        )}
+        {currentRoute === 'admin-restock' && (
+          <AdminRestockPage
             onNavigate={handleNavigate}
             onShowToast={showToast}
           />
@@ -459,6 +472,12 @@ export default function App() {
             onShowToast={showToast}
           />
         )}
+        {currentRoute === 'admin-memberships' && (
+          <AdminMembershipsPage
+            onNavigate={handleNavigate}
+            onShowToast={showToast}
+          />
+        )}
         {currentRoute === 'admin-complaints' && (
           <AdminComplaintsPage
             onNavigate={handleNavigate}
@@ -494,7 +513,7 @@ export default function App() {
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-stone-100">
               <span className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-primary" />
-                Hệ Thống Aura Café ({allScreens.length} Màn hình)
+                Aura Café System Navigator ({allScreens.length} Screens)
               </span>
               <button
                 onClick={() => setIsScreenNavOpen(false)}
@@ -504,15 +523,15 @@ export default function App() {
               </button>
             </div>
 
-            {/* Role Filter Tabs */}
+            {/* Subsystem Filter Tabs (English names) */}
             <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-2 text-[11px] font-semibold border-b border-stone-100">
               {[
-                { id: 'all', label: `Tất cả (${allScreens.length})` },
-                { id: 'customer', label: 'Khách hàng' },
-                { id: 'pos', label: 'Thu ngân' },
-                { id: 'kds', label: 'Barista' },
-                { id: 'delivery', label: 'Shipper' },
-                { id: 'admin', label: 'Admin ERP' },
+                { id: 'all', label: `All (${allScreens.length})` },
+                { id: 'customer', label: 'Customer' },
+                { id: 'pos', label: 'POS (Cashier)' },
+                { id: 'kds', label: 'KDS (Barista)' },
+                { id: 'delivery', label: 'Delivery Staff' },
+                { id: 'admin', label: 'Admin (ERP)' },
               ].map(f => (
                 <button
                   key={f.id}
@@ -569,12 +588,12 @@ export default function App() {
         <button
           onClick={() => setIsScreenNavOpen(!isScreenNavOpen)}
           className="h-12 px-4 rounded-full bg-stone-900 text-white shadow-xl hover:bg-stone-800 active:scale-95 transition-all flex items-center gap-2.5 border border-stone-700 group"
-          title="Xem tất cả các màn hình trong hệ thống"
+          title="Switch subsystems and view all 31 screens"
         >
           <span className="material-symbols-outlined text-amber-400 group-hover:rotate-45 transition-transform text-[20px]">
             grid_view
           </span>
-          <span className="text-xs font-bold">Chuyển Phân Hệ ({allScreens.length} Màn hình)</span>
+          <span className="text-xs font-bold">Subsystem Switcher ({allScreens.length} Screens)</span>
         </button>
       </div>
 

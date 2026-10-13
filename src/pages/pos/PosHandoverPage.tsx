@@ -61,8 +61,8 @@ export const PosHandoverPage: React.FC<PosHandoverPageProps> = ({ onNavigate, on
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs uppercase tracking-wider text-stone-500 font-semibold">
-                  Hệ thống bàn giao POS
+                <span className="px-2.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold">
+                  Screen 27 • Shift Handover Screen (UC62)
                 </span>
                 <span className="text-stone-300">•</span>
                 <span className="px-2 py-0.5 rounded-lg bg-stone-100 font-mono text-xs font-bold text-stone-800">

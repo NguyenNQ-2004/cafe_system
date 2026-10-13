@@ -7,6 +7,7 @@ export type PageRoute =
   | 'cart'
   | 'checkout'
   | 'payment'
+  | 'bill'
   | 'orders'
   | 'profile'
   | 'pos-create'
@@ -19,18 +20,19 @@ export type PageRoute =
   | 'delivery-report'
   | 'delivery-cod'
   | 'admin-ingredients'
+  | 'admin-recipes'
   | 'admin-purchases'
   | 'admin-overview'
   | 'admin-categories'
   | 'admin-products'
   | 'admin-stock'
+  | 'admin-restock'
   | 'admin-orders'
   | 'admin-users'
   | 'admin-attendance'
   | 'admin-shifts'
   | 'admin-schedules'
   | 'admin-suppliers'
-  | 'admin-purchases'
   | 'admin-customers'
   | 'admin-memberships'
   | 'admin-complaints'
@@ -118,7 +120,7 @@ export interface UserProfile {
   birthday: string;
   gender: string;
   address: string;
-  tier: 'Silver' | 'Gold' | 'Diamond';
+  tier?: string;
   memberId: string;
   points: number;
   joinDate: string;
@@ -261,7 +263,8 @@ export interface DbPayment {
 export interface DbMembership {
   membership_id: number;
   user_id: number;
-  tier_name: 'BRONZE' | 'SILVER' | 'GOLD' | 'PLATINUM';
+  phone_number?: string;
+  tier_name?: string;
   points_balance: number;
   joined_at: string;
 }

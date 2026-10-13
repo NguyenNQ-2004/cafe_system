@@ -11,7 +11,7 @@
     onClose,
     onLoginSuccess
   }) => {
-    const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot'>('login');
+    const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot' | 'change'>('login');
     const [showPassword, setShowPassword] = useState(false);
     const [showRegPassword, setShowRegPassword] = useState(false);
     const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -24,6 +24,9 @@
     const [regEmail, setRegEmail] = useState('');
     const [regPassword, setRegPassword] = useState('');
     const [forgotInput, setForgotInput] = useState('');
+    const [oldPassword, setOldPassword] = useState('');
+    const [newPassword, setNewPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
 
     if (!isOpen) return null;
 
@@ -60,6 +63,18 @@
       setTimeout(() => {
         setActiveTab('login');
       }, 1500);
+    };
+
+    const handleChangeSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      if (newPassword !== confirmPassword) {
+        triggerToast('Mật khẩu xác nhận không khớp! Vui lòng thử lại.');
+        return;
+      }
+      triggerToast('Đổi mật khẩu tài khoản thành công!');
+      setTimeout(() => {
+        setActiveTab('login');
+      }, 1200);
     };
 
     return (
@@ -139,10 +154,10 @@
           {/* Right Interactive Form Container */}
           <div className="w-full md:w-7/12 p-space-lg md:p-space-xl flex flex-col justify-center bg-surface-container-lowest">
             {/* Interactive Tab Selector */}
-            <div className="flex items-center p-1 bg-surface-container-high rounded-lg mb-space-lg">
+            <div className="flex items-center p-1 bg-surface-container-high rounded-lg mb-space-lg overflow-x-auto">
               <button
                 onClick={() => setActiveTab('login')}
-                className={`flex-1 py-space-sm px-space-md text-center rounded font-label-lg text-label-lg transition-all duration-200 cursor-pointer ${
+                className={`flex-1 py-space-sm px-2 text-center rounded font-label-lg text-xs md:text-sm transition-all duration-200 cursor-pointer whitespace-nowrap ${
                   activeTab === 'login'
                     ? 'bg-surface-container-lowest text-on-surface shadow-sm font-semibold'
                     : 'text-secondary hover:text-on-surface'
@@ -152,7 +167,7 @@
               </button>
               <button
                 onClick={() => setActiveTab('register')}
-                className={`flex-1 py-space-sm px-space-md text-center rounded font-label-lg text-label-lg transition-all duration-200 cursor-pointer ${
+                className={`flex-1 py-space-sm px-2 text-center rounded font-label-lg text-xs md:text-sm transition-all duration-200 cursor-pointer whitespace-nowrap ${
                   activeTab === 'register'
                     ? 'bg-surface-container-lowest text-on-surface shadow-sm font-semibold'
                     : 'text-secondary hover:text-on-surface'
@@ -162,13 +177,23 @@
               </button>
               <button
                 onClick={() => setActiveTab('forgot')}
-                className={`flex-1 py-space-sm px-space-md text-center rounded font-label-lg text-label-lg transition-all duration-200 cursor-pointer ${
+                className={`flex-1 py-space-sm px-2 text-center rounded font-label-lg text-xs md:text-sm transition-all duration-200 cursor-pointer whitespace-nowrap ${
                   activeTab === 'forgot'
                     ? 'bg-surface-container-lowest text-on-surface shadow-sm font-semibold'
                     : 'text-secondary hover:text-on-surface'
                 }`}
               >
                 Quên mật khẩu
+              </button>
+              <button
+                onClick={() => setActiveTab('change')}
+                className={`flex-1 py-space-sm px-2 text-center rounded font-label-lg text-xs md:text-sm transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                  activeTab === 'change'
+                    ? 'bg-surface-container-lowest text-on-surface shadow-sm font-semibold'
+                    : 'text-secondary hover:text-on-surface'
+                }`}
+              >
+                Đổi mật khẩu
               </button>
             </div>
 
@@ -492,6 +517,79 @@
                 >
                   <span>Gửi mã khôi phục</span>
                   <span className="material-symbols-outlined text-[18px]">send</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('login')}
+                  className="w-full h-11 bg-surface-container-low hover:bg-surface-container rounded font-label-md text-label-md text-on-surface flex items-center justify-center gap-space-sm transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-[18px]">arrow_back</span>
+                  <span>Quay lại Đăng nhập</span>
+                </button>
+              </form>
+            )}
+
+            {/* TAB 4: CHANGE PASSWORD FORM (UC04) */}
+            {activeTab === 'change' && (
+              <form className="flex flex-col gap-space-md" onSubmit={handleChangeSubmit}>
+                <div className="space-y-1">
+                  <h2 className="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">
+                    Đổi mật khẩu tài khoản
+                  </h2>
+                  <p className="font-body-sm text-body-sm text-secondary">
+                    Áp dụng cho Khách hàng, Thu ngân, Barista và Quản lý hệ thống (UC04)
+                  </p>
+                </div>
+
+                <div className="space-y-space-xs mt-space-xs">
+                  <label className="font-label-md text-label-md text-on-surface font-medium block">
+                    Mật khẩu hiện tại *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    placeholder="Nhập mật khẩu đang sử dụng"
+                    className="w-full h-11 px-space-md bg-surface-container-low rounded text-on-surface placeholder:text-secondary/60 font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container/20 border-0"
+                  />
+                </div>
+
+                <div className="space-y-space-xs">
+                  <label className="font-label-md text-label-md text-on-surface font-medium block">
+                    Mật khẩu mới *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="Tối thiểu 6 ký tự"
+                    className="w-full h-11 px-space-md bg-surface-container-low rounded text-on-surface placeholder:text-secondary/60 font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container/20 border-0"
+                  />
+                </div>
+
+                <div className="space-y-space-xs">
+                  <label className="font-label-md text-label-md text-on-surface font-medium block">
+                    Xác nhận mật khẩu mới *
+                  </label>
+                  <input
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="Nhập lại mật khẩu mới"
+                    className="w-full h-11 px-space-md bg-surface-container-low rounded text-on-surface placeholder:text-secondary/60 font-body-md text-body-md focus:bg-surface-container-lowest focus:outline-none focus:ring-2 focus:ring-primary-container/20 border-0"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full h-12 bg-primary-container hover:bg-primary text-white rounded font-label-lg text-label-lg font-semibold flex items-center justify-center gap-space-sm shadow-md transition-all cursor-pointer mt-1"
+                >
+                  <span>Cập nhật mật khẩu</span>
+                  <span className="material-symbols-outlined text-[18px]">lock_reset</span>
                 </button>
 
                 <button

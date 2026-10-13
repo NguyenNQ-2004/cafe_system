@@ -17,7 +17,10 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'all' | 'processing' | 'shipping' | 'completed' | 'canceled'>('all');
   const [searchCode, setSearchCode] = useState('');
-  const [orders] = useState<PastOrder[]>(INITIAL_PAST_ORDERS);
+  const [orders, setOrders] = useState<PastOrder[]>(INITIAL_PAST_ORDERS);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState('Khách đổi ý / Thay đổi kế hoạch');
+  const [isLiveOrderCancelled, setIsLiveOrderCancelled] = useState(false);
 
   const filteredOrders = orders.filter((o) => {
     const matchSearch =
@@ -334,14 +337,51 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({
                     </div>
                   </div>
 
-                  {/* Summary Row */}
-                  <div className="flex items-center justify-between pt-space-xs text-on-surface">
-                    <span className="font-body-md text-body-md text-on-surface-variant">
-                      Tổng thanh toán (Đã gồm VAT &amp; Phí ship 15.000₫):
-                    </span>
-                    <span className="font-headline-md text-headline-md font-tabular-data text-primary font-bold">
-                      148.000₫
-                    </span>
+                  {/* Summary Row & Actions */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-space-xs text-on-surface border-t border-surface-container-high gap-3">
+                    <div>
+                      <span className="font-body-md text-body-md text-on-surface-variant block">
+                        Tổng thanh toán (Đã gồm VAT &amp; Phí ship 15.000₫):
+                      </span>
+                      <span className="font-headline-md text-headline-md font-tabular-data text-primary font-bold">
+                        {isLiveOrderCancelled ? '0₫ (Đã hủy & Hoàn tiền)' : '148.000₫'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <button
+                        type="button"
+                        onClick={() => onNavigate('bill')}
+                        className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">receipt_long</span>
+                        <span>Xem hóa đơn (Bill)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => onOpenDriverChat('Trần Hoàng Long', '#AUR-89241')}
+                        className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-800 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">chat</span>
+                        <span>Chat với tài xế</span>
+                      </button>
+
+                      {!isLiveOrderCancelled ? (
+                        <button
+                          type="button"
+                          onClick={() => setIsCancelModalOpen(true)}
+                          className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">cancel</span>
+                          <span>Hủy đơn hàng (UC16)</span>
+                        </button>
+                      ) : (
+                        <span className="px-3 py-1.5 rounded-lg bg-rose-100 text-rose-800 text-xs font-bold">
+                          Đã hủy theo yêu cầu
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -510,6 +550,62 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Cancel Order Modal (UC16) */}
+      {isCancelModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-2xl border border-stone-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 text-rose-600">
+              <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center shrink-0">
+                <span className="material-symbols-outlined text-[24px]">warning</span>
+              </div>
+              <div>
+                <h3 className="font-bold text-base text-stone-900">Xác nhận hủy đơn hàng</h3>
+                <span className="text-xs text-stone-500 font-mono">Đơn hàng #AUR-89241</span>
+              </div>
+            </div>
+
+            <p className="text-xs text-stone-600 leading-relaxed">
+              Bạn có chắc chắn muốn hủy đơn hàng này không? Theo chính sách Aura Café, đơn hàng đang chờ hoặc chuẩn bị có thể hủy và sẽ hoàn 100% tiền (148.000₫) về phương thức thanh toán ban đầu.
+            </p>
+
+            <div className="space-y-1.5 text-xs">
+              <label className="font-bold text-stone-700 block">Lý do hủy đơn *</label>
+              <select
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+                className="w-full px-3 py-2 border border-stone-300 rounded-xl outline-none focus:border-primary text-stone-800"
+              >
+                <option value="Khách đổi ý / Thay đổi kế hoạch">Khách đổi ý / Thay đổi kế hoạch đột xuất</option>
+                <option value="Thời gian giao hàng dự kiến quá lâu">Thời gian giao hàng dự kiến quá lâu</option>
+                <option value="Đặt nhầm món / Nhầm địa chỉ giao">Đặt nhầm món / Nhầm địa chỉ giao hàng</option>
+                <option value="Lý do khác">Lý do cá nhân khác</option>
+              </select>
+            </div>
+
+            <div className="pt-3 border-t border-stone-100 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsCancelModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold"
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsLiveOrderCancelled(true);
+                  setIsCancelModalOpen(false);
+                  alert('Đơn hàng #AUR-89241 đã được hủy thành công! Tiền thanh toán sẽ được hoàn về ví trong 5 phút.');
+                }}
+                className="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"
+              >
+                Xác nhận hủy đơn
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

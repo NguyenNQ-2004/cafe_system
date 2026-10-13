@@ -43,12 +43,14 @@ export const DeliverySidebar: React.FC<DeliverySidebarProps> = ({ currentRoute, 
         </div>
 
         {/* Navigation links */}
-        <nav className="space-y-1 text-xs sm:text-sm font-semibold">
-          {[
-            { id: 'delivery-orders', label: 'Đơn được phân công', icon: 'local_shipping' },
-            { id: 'delivery-report', label: 'Báo cáo sự cố đơn', icon: 'report_problem' },
-            { id: 'delivery-cod', label: 'Đối soát COD & Tiền mặt', icon: 'payments' },
-          ].map(tab => {
+        <div className="space-y-1">
+          <p className="px-2 text-[10px] text-stone-400 uppercase tracking-wider font-bold">Screen 14 • Modules</p>
+          <nav className="space-y-1 text-xs sm:text-sm font-semibold">
+            {[
+              { id: 'delivery-orders', label: 'Đơn được phân công', icon: 'local_shipping' },
+              { id: 'delivery-report', label: 'Báo cáo sự cố đơn', icon: 'report_problem' },
+              { id: 'delivery-cod', label: 'Đối soát COD & Tiền mặt', icon: 'payments' },
+            ].map(tab => {
             const active = currentRoute === tab.id;
             return (
               <button
@@ -65,7 +67,8 @@ export const DeliverySidebar: React.FC<DeliverySidebarProps> = ({ currentRoute, 
               </button>
             );
           })}
-        </nav>
+          </nav>
+        </div>
       </div>
 
       {/* Footer Info */}

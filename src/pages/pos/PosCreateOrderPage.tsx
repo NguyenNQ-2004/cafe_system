@@ -30,13 +30,12 @@ export const PosCreateOrderPage: React.FC<PosCreateOrderPageProps> = ({ onNaviga
   const [customer, setCustomer] = useState<{
     name: string;
     phone: string;
-    tier: string;
+    tier?: string;
     code: string;
     points: number;
   } | null>({
     name: 'Nguyễn Văn An',
     phone: '0988 234 891',
-    tier: 'Gold Member',
     code: 'AUR-8823',
     points: 450
   });
@@ -256,7 +255,6 @@ export const PosCreateOrderPage: React.FC<PosCreateOrderPageProps> = ({ onNaviga
     setCustomer({
       name: newCustForm.name,
       phone: newCustForm.phone,
-      tier: 'Bạc (New Member)',
       code: `AUR-${Math.floor(1000 + Math.random() * 9000)}`,
       points: 50
     });
@@ -281,7 +279,9 @@ export const PosCreateOrderPage: React.FC<PosCreateOrderPageProps> = ({ onNaviga
       <div className="w-full px-4 sm:px-6 py-2.5 bg-stone-100 flex flex-wrap items-center justify-between gap-3 border-b border-stone-200">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
-            <span className="text-xs sm:text-sm font-bold text-primary uppercase">Hóa Đơn Bán Lẻ:</span>
+            <span className="px-2.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold">
+              Screen 8 • Counter Ordering Screen (UC13, UC56)
+            </span>
             <span className="font-mono font-bold text-stone-900 bg-white px-2.5 py-0.5 rounded border border-stone-200 text-xs">
               #ORD-20241024-0089
             </span>
@@ -447,12 +447,13 @@ export const PosCreateOrderPage: React.FC<PosCreateOrderPageProps> = ({ onNaviga
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-sm text-stone-900">{customer.name}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 text-[10px] font-bold">
-                          {customer.tier}
+                        <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-900 text-[10px] font-bold flex items-center gap-1">
+                          <span className="material-symbols-outlined text-[12px]">phone_iphone</span>
+                          Tích điểm SĐT
                         </span>
                       </div>
                       <span className="text-xs text-stone-500 font-mono">
-                        Mã: {customer.code} • {customer.phone}
+                        {customer.phone} • {customer.points} điểm
                       </span>
                     </div>
                   </div>
@@ -496,7 +497,6 @@ export const PosCreateOrderPage: React.FC<PosCreateOrderPageProps> = ({ onNaviga
                     setCustomer({
                       name: 'Nguyễn Văn An',
                       phone: '0988 234 891',
-                      tier: 'Gold Member',
                       code: 'AUR-8823',
                       points: 450
                     });
