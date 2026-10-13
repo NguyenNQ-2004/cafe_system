@@ -191,53 +191,54 @@ export default function App() {
     'home', 'menu', 'customize', 'cart', 'checkout', 'payment', 'orders', 'profile', 'feedback'
   ].includes(currentRoute);
 
-  // All 23 Screens organized by System Module
+  // Available application screens organized by system module
   const allScreens: {
-    route: PageRoute;
+    route: PageRoute | 'auth-modal';
     label: string;
     tag: string;
     icon: string;
     role: 'customer' | 'pos' | 'kds' | 'delivery' | 'admin';
   }[] = [
+      { route: 'auth-modal', label: 'Authentication Screen', tag: 'Screen 1', icon: 'login', role: 'customer' },
       // 1. Khách hàng
-      { route: 'home', label: 'Trang chủ Aura Café', tag: 'Page 1', icon: 'storefront', role: 'customer' },
-      { route: 'menu', label: 'Menu & Đồ uống', tag: 'Page 2', icon: 'menu_book', role: 'customer' },
-      { route: 'customize', label: 'Chi tiết & Custom món', tag: 'Page 3', icon: 'tune', role: 'customer' },
-      { route: 'cart', label: 'Giỏ hàng của bạn', tag: 'Page 4', icon: 'shopping_bag', role: 'customer' },
-      { route: 'checkout', label: 'Xác nhận đơn & Địa chỉ', tag: 'Page 5', icon: 'local_shipping', role: 'customer' },
-      { route: 'payment', label: 'Thanh toán & VietQR', tag: 'Page 6', icon: 'qr_code_2', role: 'customer' },
-      { route: 'orders', label: 'Theo dõi đơn hàng', tag: 'Page 7', icon: 'moped', role: 'customer' },
-      { route: 'profile', label: 'Aura Rewards & VIP', tag: 'Page 8', icon: 'workspace_premium', role: 'customer' },
-      { route: 'feedback', label: 'Khiếu nại & Góp ý', tag: 'Page 9', icon: 'rate_review', role: 'customer' },
+      { route: 'home', label: 'Homepage Screen', tag: 'Screen 3', icon: 'storefront', role: 'customer' },
+      { route: 'menu', label: 'Menu Screen', tag: 'Screen 4', icon: 'menu_book', role: 'customer' },
+      { route: 'customize', label: 'Product Detail Screen', tag: 'Screen 5', icon: 'tune', role: 'customer' },
+      { route: 'cart', label: 'Shopping Cart Screen', tag: 'Screen 6', icon: 'shopping_bag', role: 'customer' },
+      { route: 'checkout', label: 'Online Ordering Screen', tag: 'Screen 7', icon: 'local_shipping', role: 'customer' },
+      { route: 'payment', label: 'Payment Screen', tag: 'Screen 9', icon: 'qr_code_2', role: 'customer' },
+      { route: 'orders', label: 'Order Management Screen', tag: 'Screen 11', icon: 'moped', role: 'customer' },
+      { route: 'profile', label: 'Customer Profile Screen', tag: 'Screen 2', icon: 'workspace_premium', role: 'customer' },
+      { route: 'payment', label: 'Bill Screen', tag: 'Screen 10', icon: 'receipt', role: 'customer' },
+      { route: 'profile', label: 'Loyalty Points Management Screen', tag: 'Screen 29', icon: 'loyalty', role: 'customer' },
 
       // 2. Thu ngân POS
-      { route: 'pos-create', label: 'Tạo đơn quầy & Khách', tag: 'Page 10', icon: 'point_of_sale', role: 'pos' },
-      { route: 'pos-orders', label: 'Quản lý đơn quầy POS', tag: 'Page 11', icon: 'receipt_long', role: 'pos' },
-      { route: 'pos-shift', label: 'Quản lý ca & Đối soát két', tag: 'Page 12', icon: 'savings', role: 'pos' },
-      { route: 'pos-handover', label: 'Biên bản bàn giao ca', tag: 'Page 13', icon: 'assignment_turned_in', role: 'pos' },
+      { route: 'pos-create', label: 'Counter Ordering Screen', tag: 'Screen 8', icon: 'point_of_sale', role: 'pos' },
+      { route: 'pos-orders', label: 'Counter Order List Screen', tag: 'Screen 12', icon: 'receipt_long', role: 'pos' },
+      { route: 'pos-shift', label: 'Shift Cash Reconciliation Screen', tag: 'Screen 27', icon: 'savings', role: 'pos' },
 
       // 3. Barista KDS
-      { route: 'kds-terminal', label: 'Màn hình Barista KDS', tag: 'Page 14', icon: 'blender', role: 'kds' },
+      { route: 'kds-terminal', label: 'Drink Preparation Screen', tag: 'Screen 13', icon: 'blender', role: 'kds' },
 
       // 4. Đội giao hàng Delivery
-      { route: 'delivery-orders', label: 'Đơn được phân công & GPS', tag: 'Page 15', icon: 'directions_bike', role: 'delivery' },
-      { route: 'delivery-report', label: 'Báo cáo sự cố đơn hàng', tag: 'Page 16', icon: 'report_problem', role: 'delivery' },
-      { route: 'delivery-cod', label: 'Đối soát COD & Chốt ca', tag: 'Page 17', icon: 'payments', role: 'delivery' },
+      { route: 'delivery-orders', label: 'Delivery Management Screen', tag: 'Screen 14', icon: 'directions_bike', role: 'delivery' },
 
       // 5. Quản trị chuỗi Admin ERP
-      { route: 'admin-overview', label: 'Tổng quan điều hành chuỗi', tag: 'Page 18', icon: 'dashboard', role: 'admin' },
-      { route: 'admin-categories', label: 'Quản trị danh mục thực đơn', tag: 'Page 19', icon: 'category', role: 'admin' },
-      { route: 'admin-products', label: 'Quản lý Món & Giá niêm yết', tag: 'Page 20', icon: 'local_cafe', role: 'admin' },
-      { route: 'admin-stock', label: 'Tổng quan tồn kho chi nhánh', tag: 'Page 21', icon: 'inventory_2', role: 'admin' },
-      { route: 'admin-ingredients', label: 'Quản lý nguyên liệu & NCC', tag: 'Page 22', icon: 'shelves', role: 'admin' },
-      { route: 'admin-suppliers', label: 'Nhà cung cấp', tag: 'Page 23', icon: 'local_shipping', role: 'admin' },
-      { route: 'admin-purchases', label: 'Phiếu mua hàng', tag: 'Page 24', icon: 'receipt_long', role: 'admin' },
-      { route: 'admin-users', label: 'Danh sách nhân sự', tag: 'Page 25', icon: 'group', role: 'admin' },
-      { route: 'admin-shifts', label: 'Cấu hình ca làm', tag: 'Page 26', icon: 'schedule', role: 'admin' },
-      { route: 'admin-schedules', label: 'Xếp lịch nhân viên', tag: 'Page 27', icon: 'calendar_month', role: 'admin' },
-      { route: 'admin-attendance', label: 'Nhân sự & Chấm công', tag: 'Page 28', icon: 'badge', role: 'admin' },
-      { route: 'admin-customers', label: 'Khách hàng', tag: 'Page 29', icon: 'contact_page', role: 'admin' },
-      { route: 'admin-complaints', label: 'Khiếu nại', tag: 'Page 30', icon: 'feedback', role: 'admin' },
+      { route: 'admin-overview', label: 'Reports Dashboard', tag: 'Screen 31', icon: 'dashboard', role: 'admin' },
+      { route: 'admin-categories', label: 'Category Management Screen', tag: 'Screen 15', icon: 'category', role: 'admin' },
+      { route: 'admin-products', label: 'Product Management Screen', tag: 'Screen 16', icon: 'local_cafe', role: 'admin' },
+      { route: 'admin-stock', label: 'Inventory Management Screen', tag: 'Screen 19', icon: 'inventory_2', role: 'admin' },
+      { route: 'admin-ingredients', label: 'Ingredient Management Screen', tag: 'Screen 18', icon: 'shelves', role: 'admin' },
+      { route: 'admin-ingredients', label: 'Product Recipe & BOM Management Screen', tag: 'Screen 17', icon: 'menu_book', role: 'admin' },
+      { route: 'admin-stock', label: 'Inventory Transaction History Screen', tag: 'Screen 20', icon: 'history', role: 'admin' },
+      { route: 'admin-suppliers', label: 'Supplier Management Screen', tag: 'Screen 21', icon: 'local_shipping', role: 'admin' },
+      { route: 'admin-purchases', label: 'Purchase Order Management Screen', tag: 'Screen 22', icon: 'receipt_long', role: 'admin' },
+      { route: 'admin-users', label: 'Employee Management Screen', tag: 'Screen 23', icon: 'group', role: 'admin' },
+      { route: 'admin-shifts', label: 'Work Shift Management Screen', tag: 'Screen 24', icon: 'schedule', role: 'admin' },
+      { route: 'admin-schedules', label: 'Employee Schedule Screen', tag: 'Screen 25', icon: 'calendar_month', role: 'admin' },
+      { route: 'admin-attendance', label: 'Attendance Management Screen', tag: 'Screen 26', icon: 'badge', role: 'admin' },
+      { route: 'admin-customers', label: 'Customer Management Screen', tag: 'Screen 28', icon: 'contact_page', role: 'admin' },
+      { route: 'admin-complaints', label: 'Feedback & Complaint Management Screen', tag: 'Screen 30', icon: 'feedback', role: 'admin' },
     ];
 
   const filteredScreens = allScreens.filter(
@@ -486,14 +487,14 @@ export default function App() {
         orderId="#AUR-89241"
       />
 
-      {/* Floating System Switcher (Allows instant switching to any of the 23 screens across all 5 roles) */}
+      {/* Floating System Switcher for the available screens across all roles */}
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
         {isScreenNavOpen && (
           <div className="mb-3 w-88 sm:w-96 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-stone-200 p-3.5 animate-in fade-in slide-in-from-bottom-5 duration-200">
             <div className="flex items-center justify-between pb-2 mb-2 border-b border-stone-100">
               <span className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-primary" />
-                Hệ Thống Aura Café (30 Màn hình)
+                Hệ Thống Aura Café ({allScreens.length} Màn hình)
               </span>
               <button
                 onClick={() => setIsScreenNavOpen(false)}
@@ -506,7 +507,7 @@ export default function App() {
             {/* Role Filter Tabs */}
             <div className="flex items-center gap-1 overflow-x-auto pb-2 mb-2 text-[11px] font-semibold border-b border-stone-100">
               {[
-                { id: 'all', label: 'Tất cả (30)' },
+                { id: 'all', label: `Tất cả (${allScreens.length})` },
                 { id: 'customer', label: 'Khách hàng' },
                 { id: 'pos', label: 'Thu ngân' },
                 { id: 'kds', label: 'Barista' },
@@ -532,9 +533,13 @@ export default function App() {
                 const isActive = currentRoute === s.route;
                 return (
                   <button
-                    key={s.route}
+                    key={s.tag}
                     onClick={() => {
-                      handleNavigate(s.route);
+                      if (s.route === 'auth-modal') {
+                        setIsAuthOpen(true);
+                      } else {
+                        handleNavigate(s.route);
+                      }
                       setIsScreenNavOpen(false);
                     }}
                     className={`flex items-center justify-between px-3 py-2 rounded-xl text-left text-xs transition-all ${isActive
@@ -569,7 +574,7 @@ export default function App() {
           <span className="material-symbols-outlined text-amber-400 group-hover:rotate-45 transition-transform text-[20px]">
             grid_view
           </span>
-          <span className="text-xs font-bold">Chuyển Phân Hệ (30 Màn hình)</span>
+          <span className="text-xs font-bold">Chuyển Phân Hệ ({allScreens.length} Màn hình)</span>
         </button>
       </div>
 
