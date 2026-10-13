@@ -195,7 +195,7 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({
             {/* Tracking Content Grid */}
             <div className="p-space-lg grid grid-cols-1 lg:grid-cols-12 gap-gutter-lg">
               {/* Left: Progress Stepper & Items (7 cols) */}
-              <div className="lg:col-span-7 flex flex-col gap-space-xl">
+              <div className="lg:col-span-12 flex flex-col gap-space-xl">
                 {/* Stepper */}
                 <div className="flex flex-col gap-space-md bg-surface-container-low p-space-md rounded-xl border border-surface-container-high">
                   <div className="flex items-center justify-between">
@@ -346,107 +346,6 @@ export const OrdersPage: React.FC<OrdersPageProps> = ({
                 </div>
               </div>
 
-              {/* Right: Driver & Map (5 cols) */}
-              <div className="lg:col-span-5 flex flex-col gap-space-md bg-surface-container-low p-space-md rounded-xl border border-surface-container-high">
-                {/* Route Map Visual */}
-                <div className="relative w-full h-44 rounded-lg overflow-hidden shadow-sm">
-                  <div
-                    className="w-full h-full bg-cover bg-center"
-                    style={{
-                      backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuAGmg7ABOQpW0Pf3_fA8gerIF-5o7yh5wxpgbyhcKW-3AOS6VsvZEyXFhfCeKKCY7TAjir2meJe0EWh7Z-2PaifK4M4bwW5t-0jLazjIjb6eIw62Ch4NE5wlSaTPh2bNuU1G7TNu3dgpoDgdHK2gA_fieGq-TCrQJ3ChgoRnulC3oRNpE6H2SSv1psafb2hdAabvDzs_Mv42L4CIoyx2SubHsX8fRwkPJKrWI_lWKXn6N7COqfaTL3F')`
-                    }}
-                  >
-                    <div className="absolute inset-0 bg-primary/10 backdrop-brightness-95 flex flex-col justify-between p-3">
-                      <div className="flex items-center justify-between">
-                        <span className="bg-surface-container-lowest/90 px-2.5 py-1 rounded text-[11px] font-semibold text-on-surface shadow-sm flex items-center gap-1">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
-                          Tài xế đang cách bạn 1.2 km
-                        </span>
-                        <span className="bg-surface-container-lowest/90 px-2 py-0.5 rounded text-[11px] font-tabular-data font-bold text-primary">
-                          GPS Active
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-end">
-                        <div className="bg-surface-container-lowest/95 p-1.5 rounded shadow-sm text-[10px] text-on-surface font-medium">
-                          Từ: 28 Tràng Tiền, Hoàn Kiếm
-                        </div>
-                        <div className="bg-primary text-white p-1.5 rounded shadow-sm text-[10px] font-medium flex items-center gap-1">
-                          <span className="material-symbols-outlined text-[12px]">home_pin</span>
-                          Đến: 14 Ngô Quyền
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Driver Profile */}
-                <div className="bg-surface-container-lowest p-space-sm rounded-lg shadow-sm flex flex-col gap-space-sm border border-surface-container-high">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-space-sm">
-                      <div className="relative">
-                        <img
-                          src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmUgmUv3j4KSwytL_Lh9lNeLZ6X0m2N3-uGGf15qjde5_iiKOFeSIa2A_h5n_alyVG4A1Wd_ZRN0K47v9dclayuQgHM_HKwULEY_X20kr5Or7LRnDlmpf66-eHNNY6KmFoXb8Um32Umv4871RA3-xqloFW40BpPlc9uW6dIyP_XSCyX0tXbnvmqzIXnsSA1dWJk6hGn_DWH8VgexjnDLvrvNVwQx90uVfbchFn308pMR22dA45T0e2"
-                          alt="Lê Minh Trí"
-                          className="w-12 h-12 rounded-full object-cover bg-surface-container"
-                        />
-                        <span className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full ring-2 ring-surface-container-lowest" />
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-space-xs">
-                          <span className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                            Lê Minh Trí
-                          </span>
-                          <span className="material-symbols-outlined text-amber-500 text-[16px]">
-                            star
-                          </span>
-                          <span className="font-tabular-data text-tabular-data font-bold text-on-surface">
-                            4.9
-                          </span>
-                        </div>
-                        <span className="font-body-sm text-body-sm text-on-surface-variant font-tabular-data">
-                          Biển số: 59P1-882.34 • Honda Wave đỏ
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="text-right hidden sm:block">
-                      <span className="font-label-sm text-label-sm text-on-surface-variant block">
-                        Pha chế bởi
-                      </span>
-                      <span className="font-label-md text-label-md text-primary font-semibold">
-                        Barista Hoàng Nam
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="grid grid-cols-2 gap-space-xs pt-space-xs">
-                    <a
-                      href="tel:0901234567"
-                      className="h-10 rounded-lg bg-surface-container hover:bg-surface-container-high transition-colors flex items-center justify-center gap-space-xs text-on-surface font-label-md text-label-md cursor-pointer font-semibold"
-                    >
-                      <span className="material-symbols-outlined text-[18px] text-primary">call</span>
-                      <span>Gọi điện</span>
-                    </a>
-                    <button
-                      type="button"
-                      onClick={() => onOpenDriverChat('Lê Minh Trí', '#AUR-89241')}
-                      className="h-10 rounded-lg bg-primary-container hover:bg-primary transition-colors flex items-center justify-center gap-space-xs text-white font-label-md text-label-md cursor-pointer font-semibold shadow-sm"
-                    >
-                      <span className="material-symbols-outlined text-[18px]">chat</span>
-                      <span>Nhắn tin hỗ trợ</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Thermal Protection Tip */}
-                <div className="px-space-sm py-2 rounded-lg bg-secondary-container/40 flex items-center gap-space-sm text-on-secondary-container border border-secondary-container">
-                  <span className="material-symbols-outlined text-secondary text-[20px]">info</span>
-                  <p className="font-body-sm text-body-sm leading-tight">
-                    Đơn hàng đang trong quy trình giữ ấm chân không. Quý khách vui lòng để ý chuông điện thoại.
-                  </p>
-                </div>
-              </div>
             </div>
           </div>
         )}
