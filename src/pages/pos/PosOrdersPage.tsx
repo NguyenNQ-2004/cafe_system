@@ -1,303 +1,165 @@
 import React, { useState } from 'react';
-import { PageRoute } from '../../types';
+import { PageRoute, Order, OrderStatus } from '../../types';
 import { PosHeader } from './PosHeader';
+import { useDb } from '../../data/DbContext';
+import {
+  ORDER_STATUS_LABEL,
+  ORDER_STATUS_STYLE,
+  ORDER_TYPE_LABEL,
+  PAYMENT_METHOD_LABEL,
+  PAYMENT_STATUS_LABEL,
+  PAYMENT_STATUS_STYLE,
+  customizationTags,
+  fmtDateTime,
+  fmtMoney,
+  fmtTime,
+  nowSql,
+  orderCustomerName,
+  orderItemsOf,
+  paymentOf,
+  userName
+} from '../../data/dbUtils';
 
 interface PosOrdersPageProps {
   onNavigate: (route: PageRoute) => void;
   onShowToast?: (msg: string) => void;
+  onOpenBill?: (orderId: number) => void;
 }
 
-interface CounterOrder {
-  id: string;
-  code: string;
-  time: string;
-  minutesAgo: string;
-  type: 'dine-in' | 'takeaway' | 'pickup';
-  typeLabel: string;
-  tableOrBuzzer: string;
-  customerName: string;
-  customerRank: string;
-  customerPhone: string;
-  items: { name: string; qty: number; note?: string; options?: string[] }[];
-  total: number;
-  paymentMethod: string;
-  status: 'ready' | 'brewing' | 'completed' | 'cancelled';
-  statusLabel: string;
-  statusTime?: string;
-  stationOrStaff?: string;
-}
+type StatusFilter = 'all' | OrderStatus;
 
-export const PosOrdersPage: React.FC<PosOrdersPageProps> = ({ onNavigate, onShowToast }) => {
-  const [selectedOrderCode, setSelectedOrderCode] = useState('ORD-042');
-  const [statusFilter, setStatusFilter] = useState<'all' | 'brewing' | 'ready' | 'completed' | 'cancelled'>('all');
-  const [typeFilter, setTypeFilter] = useState<'all' | 'dine-in' | 'takeaway' | 'pickup'>('all');
+export const PosOrdersPage: React.FC<PosOrdersPageProps> = ({ onNavigate, onShowToast, onOpenBill }) => {
+  const { db, transact, setOrderStatus, cancelOrder } = useDb();
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [typeFilter, setTypeFilter] = useState<'all' | 'DINE_IN' | 'TAKEAWAY'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  const [orders, setOrders] = useState<CounterOrder[]>([
-    {
-      id: 'o-42',
-      code: 'ORD-042',
-      time: '10:38:12',
-      minutesAgo: '4 phút trước',
-      type: 'dine-in',
-      typeLabel: 'Tại quán',
-      tableOrBuzzer: 'Bàn 06 • Rung #08',
-      customerName: 'Nguyễn Văn An',
-      customerRank: 'Gold Member • 1.420 điểm',
-      customerPhone: '0912***482',
-      items: [
-        { name: 'Cà phê Muối Di Sản (M, Ít ngọt)', qty: 2, options: ['Ít ngọt (50% đường)', 'Đá riêng', '+ Kem muối đánh béo'] },
-        { name: 'Croissant Bơ Tỏi Nướng', qty: 1, note: 'Đun nóng bánh kỹ', options: ['Đun nóng lò 2 phút'] }
-      ],
-      total: 148000,
-      paymentMethod: 'VietQR Đã TT',
-      status: 'ready',
-      statusLabel: 'SẴN SÀNG TRẢ',
-      statusTime: 'Xong lúc 10:41'
-    },
-    {
-      id: 'o-41',
-      code: 'ORD-041',
-      time: '10:35:05',
-      minutesAgo: '7 phút trước',
-      type: 'takeaway',
-      typeLabel: 'Mang đi',
-      tableOrBuzzer: 'Túi giấy quầy • #14',
-      customerName: 'Trần Phương Linh',
-      customerRank: 'Khách thân thiết • 320 điểm',
-      customerPhone: '0988***112',
-      items: [
-        { name: 'Trà Ô Long Mãng Cầu Đỏ (L)', qty: 1, options: ['Ít ngọt (30%)', 'Thêm trân châu 3Q'] },
-        { name: 'Cold Brew Cam Sả Quế (L)', qty: 1, options: ['Đá chuẩn', 'Lát cam sấy'] }
-      ],
-      total: 125000,
-      paymentMethod: 'Thẻ POS 02',
-      status: 'brewing',
-      statusLabel: 'KDS ĐANG PHA',
-      stationOrStaff: 'Trạm 1 (Barista Huy)'
-    },
-    {
-      id: 'o-40',
-      code: 'ORD-040',
-      time: '10:22:15',
-      minutesAgo: '20 phút trước',
-      type: 'dine-in',
-      typeLabel: 'Tại quán',
-      tableOrBuzzer: 'Bàn 02 (Tầng 1)',
-      customerName: 'Khách vãng lai',
-      customerRank: 'Không tích điểm',
-      customerPhone: 'Vãng lai',
-      items: [
-        { name: 'Espresso Double Shot', qty: 1 },
-        { name: 'Nước suối Alba khoáng nhẹ', qty: 1 }
-      ],
-      total: 75000,
-      paymentMethod: 'Tiền mặt',
-      status: 'completed',
-      statusLabel: 'ĐÃ HOÀN TẤT',
-      statusTime: 'Đã giao lúc 10:28'
-    },
-    {
-      id: 'o-39',
-      code: 'ORD-039',
-      time: '10:15:00',
-      minutesAgo: 'Hẹn 10:45 lấy',
-      type: 'pickup',
-      typeLabel: 'Pickup App',
-      tableOrBuzzer: 'Kệ lấy nhanh A2',
-      customerName: 'Hoàng Thu Thảo',
-      customerRank: 'Diamond VIP • 4.890 điểm',
-      customerPhone: '0903***778',
-      items: [
-        { name: 'Trà Sữa Oolong Nướng Trân Châu', qty: 3 },
-        { name: 'Tiramisu Cacao Ý', qty: 2 }
-      ],
-      total: 285000,
-      paymentMethod: 'Ví Aura Pay Đã TT',
-      status: 'ready',
-      statusLabel: 'SẴN SÀNG Ở KỆ',
-      statusTime: 'Hẹn 10:45'
-    },
-    {
-      id: 'o-38',
-      code: 'ORD-038',
-      time: '10:10:40',
-      minutesAgo: '31 phút trước',
-      type: 'dine-in',
-      typeLabel: 'Tại quán',
-      tableOrBuzzer: 'Bàn 11 (Tầng 2)',
-      customerName: 'Lê Hoàng Nam',
-      customerRank: 'Silver • 180 điểm',
-      customerPhone: '0934***901',
-      items: [
-        { name: 'Matcha Latte Yến Mạch (Nóng)', qty: 2, options: ['Ít ngọt', 'Sữa Oat Milk'] }
-      ],
-      total: 140000,
-      paymentMethod: 'VietQR Đã TT',
-      status: 'brewing',
-      statusLabel: 'KDS ĐANG PHA',
-      stationOrStaff: 'Trạm 2 (Barista An)'
-    },
-    {
-      id: 'o-37',
-      code: 'ORD-037',
-      time: '09:50:20',
-      minutesAgo: 'Đã hoàn tiền',
-      type: 'dine-in',
-      typeLabel: 'Tại quán',
-      tableOrBuzzer: 'Bàn 04 (Khách hủy bận)',
-      customerName: 'Vũ Đức Minh',
-      customerRank: 'Khách thành viên',
-      customerPhone: '0918***662',
-      items: [
-        { name: 'Pour Over Geisha Panama 90+', qty: 1 }
-      ],
-      total: 180000,
-      paymentMethod: 'Đã hoàn tiền VietQR',
-      status: 'cancelled',
-      statusLabel: 'ĐÃ HỦY ĐƠN',
-      statusTime: 'Duyệt bởi: Quản lý ca'
-    }
-  ]);
+  // Đơn phục vụ tại quầy: tại quán + mang đi (kể cả khách đặt online rồi đến lấy)
+  const counterOrders = db.orders
+    .filter(o => o.order_type === 'DINE_IN' || o.order_type === 'TAKEAWAY')
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
 
-  const selectedOrder = orders.find(o => o.code === selectedOrderCode) || orders[0];
-
-  const handleBuzzOrder = (order: CounterOrder) => {
-    onShowToast?.(`Đã gửi lệnh rung chuông thẻ buzzer cho đơn #${order.code} (${order.customerName})!`);
-  };
-
-  const handlePrintReceipt = (code: string) => {
-    onShowToast?.(`Đang in lại hóa đơn K80 cho đơn #${code}...`);
-  };
-
-  const handlePrintSticker = (code: string) => {
-    onShowToast?.(`Đã in tem nhãn sticker KDS dán ly cho đơn #${code}!`);
-  };
-
-  const handleCompleteOrder = (code: string) => {
-    setOrders(prev =>
-      prev.map(o => (o.code === code ? { ...o, status: 'completed', statusLabel: 'ĐÃ HOÀN TẤT' } : o))
-    );
-    onShowToast?.(`Đã xác nhận trả đồ thành công cho đơn #${code}!`);
-  };
-
-  const handleRefund = (code: string) => {
-    const reason = prompt(`Nhập lý do hủy hoặc hoàn tiền cho đơn #${code}:`);
-    if (reason) {
-      setOrders(prev =>
-        prev.map(o =>
-          o.code === code
-            ? { ...o, status: 'cancelled', statusLabel: 'ĐÃ HỦY ĐƠN', paymentMethod: 'Đã hoàn tiền' }
-            : o
-        )
-      );
-      onShowToast?.(`Đã lập biên bản hủy đơn #${code} với lý do: "${reason}"`);
-    }
-  };
-
-  const filteredOrders = orders.filter(o => {
+  const filteredOrders = counterOrders.filter(o => {
+    const q = searchQuery.trim().toLowerCase();
     const matchStatus = statusFilter === 'all' || o.status === statusFilter;
-    const matchType = typeFilter === 'all' || o.type === typeFilter;
+    const matchType = typeFilter === 'all' || o.order_type === typeFilter;
+    const customer = orderCustomerName(db, o).toLowerCase();
+    const phone = o.customer_id ? db.users.find(u => u.id === o.customer_id)?.phone ?? '' : o.recipient_phone ?? '';
     const matchSearch =
-      searchQuery.trim() === '' ||
-      o.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.customerPhone.includes(searchQuery) ||
-      o.tableOrBuzzer.toLowerCase().includes(searchQuery.toLowerCase());
+      q === '' ||
+      o.order_code.toLowerCase().includes(q) ||
+      customer.includes(q) ||
+      phone.includes(q) ||
+      (o.table_number ?? '').toLowerCase().includes(q);
     return matchStatus && matchType && matchSearch;
   });
+
+  const selected = counterOrders.find(o => o.id === selectedId) ?? filteredOrders[0];
+
+  const paidRevenue = counterOrders
+    .filter(o => o.status !== 'CANCELLED' && paymentOf(db, o.id)?.status === 'SUCCESS')
+    .reduce((s, o) => s + o.final_amount, 0);
+
+  const handleComplete = (o: Order) => {
+    const pay = paymentOf(db, o.id);
+    if (pay && pay.status !== 'SUCCESS') {
+      onShowToast?.(`Đơn ${o.order_code} chưa thanh toán. Hãy thu tiền trước khi trả đồ.`);
+      return;
+    }
+    setOrderStatus(o.id, 'COMPLETED');
+    onShowToast?.(`Đã trả đồ cho đơn ${o.order_code}.`);
+  };
+
+  const handleCollectPayment = (o: Order) => {
+    const pay = paymentOf(db, o.id);
+    if (!pay) return;
+    transact(tx => tx.update('payments', pay.id, { status: 'SUCCESS', paid_at: nowSql() }));
+    onShowToast?.(`Đã thu ${fmtMoney(pay.amount)} cho đơn ${o.order_code}.`);
+  };
+
+  const handleCancel = (o: Order) => {
+    const reason = prompt(`Nhập lý do hủy đơn ${o.order_code}:`);
+    if (reason && reason.trim()) {
+      cancelOrder(o.id, reason.trim());
+      onShowToast?.(`Đã hủy đơn ${o.order_code}.`);
+    }
+  };
+
+  const statusTabs: { id: StatusFilter; label: string }[] = [
+    { id: 'all', label: 'Tất cả' },
+    { id: 'CONFIRMED', label: ORDER_STATUS_LABEL.CONFIRMED },
+    { id: 'PREPARING', label: ORDER_STATUS_LABEL.PREPARING },
+    { id: 'READY', label: ORDER_STATUS_LABEL.READY },
+    { id: 'COMPLETED', label: ORDER_STATUS_LABEL.COMPLETED },
+    { id: 'CANCELLED', label: ORDER_STATUS_LABEL.CANCELLED }
+  ];
+
+  const isOpen = (o: Order) => o.status !== 'COMPLETED' && o.status !== 'CANCELLED';
 
   return (
     <div className="min-h-screen bg-stone-50 pb-16 flex flex-col">
       <PosHeader currentRoute="pos-orders" onNavigate={onNavigate} onShowToast={onShowToast} />
 
-      {/* Operational Metrics Bar */}
+      {/* Metrics */}
       <div className="w-full px-4 sm:px-6 py-4 bg-white shadow-2xs border-b border-stone-200 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-4">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full xl:w-auto">
-          <div>
-            <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="px-2.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold">
-                Screen 12 • Counter Order List (UC19, UC20, UC21, UC59)
-              </span>
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse ml-1" />
-              <span className="text-[11px] text-stone-500 uppercase font-bold tracking-wider">
-                Phiên POS 02 / Ca Sáng
-              </span>
-            </div>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <h1 className="text-xl sm:text-2xl font-bold text-stone-900">Quản lý Đơn tại Quầy</h1>
-              <span className="text-xs text-stone-500 font-mono">42 giao dịch hôm nay</span>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-stone-100 p-1.5 rounded-2xl sm:ml-4">
-            <div className="px-3 py-1.5 bg-white rounded-xl shadow-2xs">
-              <span className="text-[10px] text-stone-500 block">Doanh thu ca</span>
-              <span className="text-sm font-bold text-stone-900 font-mono">5.820.000₫</span>
-            </div>
-            <div className="px-3 py-1.5 bg-white rounded-xl shadow-2xs">
-              <span className="text-[10px] text-stone-500 block">Đang pha chế</span>
-              <span className="text-sm font-bold text-amber-700 font-mono">06 ly</span>
-            </div>
-            <div className="px-3 py-1.5 bg-white rounded-xl shadow-2xs">
-              <span className="text-[10px] text-stone-500 block">Sẵn sàng trả</span>
-              <span className="text-sm font-bold text-emerald-600 font-mono">04 đơn</span>
-            </div>
-            <div className="px-3 py-1.5 bg-white rounded-xl shadow-2xs">
-              <span className="text-[10px] text-stone-500 block">Thời gian TB</span>
-              <span className="text-sm font-bold text-primary font-mono">3'42"/đơn</span>
-            </div>
+        <div>
+          <span className="px-2.5 py-0.5 rounded-full bg-primary text-white text-[10px] font-bold">Screen 12 • Danh sách đơn tại quầy</span>
+          <div className="flex items-baseline gap-2 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-stone-900">Quản lý đơn tại quầy</h1>
+            <span className="text-xs text-stone-500 font-mono">{counterOrders.length} đơn</span>
           </div>
         </div>
-
-        {/* Quick Action buttons */}
-        <div className="flex items-center gap-2 self-end xl:self-center">
-          <button
-            onClick={() => onShowToast?.('Đang gửi lệnh ping 4 thiết bị thẻ rung buzzer khách chờ nhận đồ!')}
-            className="h-10 px-3.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold flex items-center gap-1.5 transition-colors border border-stone-200"
-          >
-            <span className="material-symbols-outlined text-[18px] text-amber-800">sensors</span>
-            <span>Rung gọi hàng loạt (4)</span>
-          </button>
-          <button
-            onClick={() => onNavigate('pos-create')}
-            className="h-10 px-4 rounded-xl bg-primary hover:bg-primary-container text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-transform active:scale-95"
-          >
-            <span className="material-symbols-outlined text-[18px]">add_circle</span>
-            <span>Tạo Đơn Mới (F3)</span>
-          </button>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-stone-100 p-1.5 rounded-2xl">
+          <div className="px-3 py-1.5 bg-white rounded-xl shadow-2xs">
+            <span className="text-[10px] text-stone-500 block">Đã thu</span>
+            <span className="text-sm font-bold text-stone-900 font-mono">{fmtMoney(paidRevenue)}</span>
+          </div>
+          <div className="px-3 py-1.5 bg-white rounded-xl shadow-2xs">
+            <span className="text-[10px] text-stone-500 block">Đang pha chế</span>
+            <span className="text-sm font-bold text-amber-700 font-mono">
+              {counterOrders.filter(o => o.status === 'CONFIRMED' || o.status === 'PREPARING').length} đơn
+            </span>
+          </div>
+          <div className="px-3 py-1.5 bg-white rounded-xl shadow-2xs">
+            <span className="text-[10px] text-stone-500 block">Sẵn sàng trả</span>
+            <span className="text-sm font-bold text-emerald-600 font-mono">{counterOrders.filter(o => o.status === 'READY').length} đơn</span>
+          </div>
+          <div className="px-3 py-1.5 bg-white rounded-xl shadow-2xs">
+            <span className="text-[10px] text-stone-500 block">Đã hủy</span>
+            <span className="text-sm font-bold text-rose-700 font-mono">{counterOrders.filter(o => o.status === 'CANCELLED').length} đơn</span>
+          </div>
         </div>
+        <button
+          onClick={() => onNavigate('pos-create')}
+          className="h-10 px-4 rounded-xl bg-primary hover:bg-primary-container text-white text-xs font-bold flex items-center gap-1.5 shadow-xs"
+        >
+          <span className="material-symbols-outlined text-[18px]">add_circle</span>
+          <span>Tạo đơn mới</span>
+        </button>
       </div>
 
-      {/* Search & Filter Strip */}
+      {/* Filters */}
       <div className="w-full px-4 sm:px-6 py-2.5 bg-stone-100 flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between border-b border-stone-200">
         <div className="relative flex-1 max-w-xl">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-stone-400">
-            search
-          </span>
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-[18px] text-stone-400">search</span>
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Tìm theo mã (#ORD-...), tên khách, số điện thoại, thẻ rung hoặc bàn..."
-            className="w-full h-10 pl-9 pr-20 rounded-xl bg-white text-xs text-stone-900 placeholder:text-stone-400 border border-stone-200 focus:outline-none focus:border-primary"
+            placeholder="Tìm theo mã đơn, tên khách, số điện thoại, số bàn..."
+            className="w-full h-10 pl-9 pr-4 rounded-xl bg-white text-xs text-stone-900 placeholder:text-stone-400 border border-stone-200 focus:outline-none focus:border-primary"
           />
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-0.5 rounded bg-stone-100 text-stone-400 text-[10px] font-mono">
-            Ctrl+K
-          </span>
         </div>
-
-        {/* Dining Type Filter */}
         <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-stone-200 overflow-x-auto">
-          {[
+          {([
             { id: 'all', label: 'Tất cả hình thức' },
-            { id: 'dine-in', label: 'Tại quán (Dine-in)' },
-            { id: 'takeaway', label: 'Mang đi (Takeaway)' },
-            { id: 'pickup', label: 'Đặt trước (Pickup)' },
-          ].map(t => (
+            { id: 'DINE_IN', label: ORDER_TYPE_LABEL.DINE_IN },
+            { id: 'TAKEAWAY', label: ORDER_TYPE_LABEL.TAKEAWAY }
+          ] as const).map(t => (
             <button
               key={t.id}
-              onClick={() => setTypeFilter(t.id as any)}
+              onClick={() => setTypeFilter(t.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
                 typeFilter === t.id ? 'bg-primary text-white' : 'text-stone-600 hover:bg-stone-100'
               }`}
@@ -308,179 +170,89 @@ export const PosOrdersPage: React.FC<PosOrdersPageProps> = ({ onNavigate, onShow
         </div>
       </div>
 
-      {/* Status Tabs Bar */}
       <div className="w-full px-4 sm:px-6 bg-white border-b border-stone-200 flex items-center gap-2 overflow-x-auto py-2">
-        {[
-          { id: 'all', label: 'Tất cả đơn', count: 42, color: 'bg-primary text-white' },
-          { id: 'brewing', label: 'Đang pha chế (KDS)', count: 6, dot: 'bg-amber-500' },
-          { id: 'ready', label: 'Chờ giao khách / Sẵn sàng', count: 4, dot: 'bg-emerald-500' },
-          { id: 'completed', label: 'Đã hoàn tất', count: 30, dot: 'bg-stone-400' },
-          { id: 'cancelled', label: 'Đã hủy / Hoàn trả', count: 2, dot: 'bg-rose-500' },
-        ].map(s => {
+        {statusTabs.map(s => {
           const active = statusFilter === s.id;
+          const count = s.id === 'all' ? counterOrders.length : counterOrders.filter(o => o.status === s.id).length;
           return (
             <button
               key={s.id}
-              onClick={() => setStatusFilter(s.id as any)}
+              onClick={() => setStatusFilter(s.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap transition-colors ${
                 active ? 'bg-primary text-white' : 'text-stone-600 hover:bg-stone-100'
               }`}
             >
-              {s.dot && <span className={`w-2 h-2 rounded-full ${s.dot}`} />}
               <span>{s.label}</span>
-              <span
-                className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
-                  active ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-600'
-                }`}
-              >
-                {s.count}
-              </span>
+              <span className={`px-1.5 rounded text-[10px] font-mono ${active ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-600'}`}>{count}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Main Dual Pane Content */}
       <div className="w-full px-4 sm:px-6 py-4 flex flex-col xl:flex-row gap-5 items-start">
-        {/* Left Table Section */}
-        <div className="flex-1 w-full bg-white rounded-2xl border border-stone-200 shadow-2xs overflow-hidden flex flex-col">
-          <div className="p-3.5 bg-stone-50 border-b border-stone-200/80 flex items-center justify-between text-xs text-stone-500">
-            <span>
-              Hiển thị <strong className="text-stone-900">{filteredOrders.length}</strong> đơn quầy
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Đồng bộ tự động sau 10s
-            </span>
-          </div>
-
+        {/* Table */}
+        <div className="flex-1 w-full bg-white rounded-2xl border border-stone-200 shadow-2xs overflow-hidden">
           <div className="overflow-x-auto w-full">
             <table className="w-full text-left border-collapse text-xs sm:text-sm">
               <thead>
                 <tr className="bg-stone-50 text-stone-500 text-[11px] uppercase font-bold tracking-wider border-b border-stone-200">
                   <th className="py-2.5 px-3.5">Mã đơn & Giờ</th>
-                  <th className="py-2.5 px-3.5">Loại & Bàn/Buzzer</th>
+                  <th className="py-2.5 px-3.5">Hình thức</th>
                   <th className="py-2.5 px-3.5">Khách hàng</th>
-                  <th className="py-2.5 px-3.5">Tóm tắt món</th>
-                  <th className="py-2.5 px-3.5 text-right">Tổng tiền</th>
+                  <th className="py-2.5 px-3.5">Món</th>
+                  <th className="py-2.5 px-3.5 text-right">Thành tiền</th>
                   <th className="py-2.5 px-3.5 text-center">Trạng thái</th>
-                  <th className="py-2.5 px-3.5 text-center">Thao tác quầy</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-100">
-                {filteredOrders.map(order => {
-                  const isSelected = selectedOrder.code === order.code;
-                  const isReady = order.status === 'ready';
-                  const isBrewing = order.status === 'brewing';
-                  const isCancelled = order.status === 'cancelled';
-
+                {filteredOrders.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="py-8 text-center text-stone-400 text-xs">Không có đơn phù hợp.</td>
+                  </tr>
+                )}
+                {filteredOrders.map(o => {
+                  const pay = paymentOf(db, o.id);
                   return (
                     <tr
-                      key={order.code}
-                      onClick={() => setSelectedOrderCode(order.code)}
-                      className={`cursor-pointer transition-colors ${
-                        isSelected
-                          ? 'bg-primary/5 font-medium'
-                          : isReady
-                          ? 'bg-emerald-50/40 hover:bg-emerald-50/80'
-                          : isCancelled
-                          ? 'bg-rose-50/20 hover:bg-rose-50/40'
-                          : 'hover:bg-stone-50'
-                      }`}
+                      key={o.id}
+                      onClick={() => setSelectedId(o.id)}
+                      className={`cursor-pointer transition-colors ${selected?.id === o.id ? 'bg-primary/5' : 'hover:bg-stone-50'}`}
                     >
                       <td className="py-3 px-3.5">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`material-symbols-outlined text-[18px] ${
-                              isReady ? 'text-emerald-600' : isBrewing ? 'text-amber-600' : 'text-stone-400'
-                            }`}
-                          >
-                            {isReady ? 'notifications_active' : isBrewing ? 'blender' : 'receipt'}
-                          </span>
-                          <div>
-                            <span className="font-bold text-primary font-mono block">#{order.code}</span>
-                            <span className="text-[11px] text-stone-400 font-mono">{order.time}</span>
-                          </div>
-                        </div>
+                        <span className="font-bold text-primary font-mono block">{o.order_code}</span>
+                        <span className="text-[11px] text-stone-400 font-mono">{fmtTime(o.created_at)}</span>
                       </td>
-
                       <td className="py-3 px-3.5">
                         <span className="inline-block px-2 py-0.5 rounded bg-stone-100 font-bold text-[10px] text-stone-700 mb-1">
-                          {order.typeLabel}
+                          {ORDER_TYPE_LABEL[o.order_type]}
                         </span>
-                        <p className="text-xs font-bold text-stone-800">{order.tableOrBuzzer}</p>
+                        {o.table_number && <p className="text-xs font-bold text-stone-800">Bàn {o.table_number}</p>}
                       </td>
-
                       <td className="py-3 px-3.5">
-                        <p className="font-bold text-stone-900">{order.customerName}</p>
-                        <p className="text-[11px] text-amber-800 font-medium">{order.customerRank}</p>
+                        <p className="font-bold text-stone-900">{orderCustomerName(db, o)}</p>
+                        {o.customer_id && (
+                          <p className="text-[11px] text-amber-800">{db.users.find(u => u.id === o.customer_id)?.total_points} điểm</p>
+                        )}
                       </td>
-
                       <td className="py-3 px-3.5 max-w-xs">
-                        {order.items.map((it, idx) => (
-                          <div key={idx} className="truncate text-xs text-stone-700">
-                            <strong className="text-primary">{it.qty}x</strong> {it.name}
+                        {orderItemsOf(db, o.id).map(it => (
+                          <div key={it.id} className="truncate text-xs text-stone-700">
+                            <strong className="text-primary">{it.quantity}x</strong> {it.product_name_at_time}
                           </div>
                         ))}
                       </td>
-
                       <td className="py-3 px-3.5 text-right">
-                        <span className="font-bold font-mono text-stone-900 text-sm">
-                          {order.total.toLocaleString('vi-VN')}₫
-                        </span>
-                        <span className="block text-[10px] text-stone-400">{order.paymentMethod}</span>
-                      </td>
-
-                      <td className="py-3 px-3.5 text-center">
-                        <span
-                          className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[10px] ${
-                            isReady
-                              ? 'bg-emerald-100 text-emerald-800'
-                              : isBrewing
-                              ? 'bg-amber-100 text-amber-900'
-                              : isCancelled
-                              ? 'bg-rose-100 text-rose-800'
-                              : 'bg-stone-100 text-stone-600'
-                          }`}
-                        >
-                          {order.statusLabel}
-                        </span>
-                        {order.statusTime && (
-                          <span className="block text-[10px] text-stone-400 mt-0.5">{order.statusTime}</span>
+                        <span className="font-bold font-mono text-stone-900 text-sm">{fmtMoney(o.final_amount)}</span>
+                        {pay && (
+                          <span className="block text-[10px] text-stone-400">
+                            {PAYMENT_METHOD_LABEL[pay.payment_method]} • {PAYMENT_STATUS_LABEL[pay.status]}
+                          </span>
                         )}
                       </td>
-
-                      <td className="py-3 px-3.5 text-center" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => handleBuzzOrder(order)}
-                            className="p-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-2xs"
-                            title="Bấm rung chuông khách"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">volume_up</span>
-                          </button>
-                          <button
-                            onClick={() => handlePrintReceipt(order.code)}
-                            className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700"
-                            title="In lại bill K80"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">print</span>
-                          </button>
-                          <button
-                            onClick={() => handlePrintSticker(order.code)}
-                            className="p-1.5 rounded-lg bg-stone-100 hover:bg-stone-200 text-stone-700"
-                            title="In tem dán ly"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">label</span>
-                          </button>
-                          <button
-                            onClick={() => handleCompleteOrder(order.code)}
-                            className="p-1.5 rounded-lg bg-stone-100 hover:bg-emerald-100 hover:text-emerald-800 text-stone-700"
-                            title="Giao xong"
-                          >
-                            <span className="material-symbols-outlined text-[16px]">done_all</span>
-                          </button>
-                        </div>
+                      <td className="py-3 px-3.5 text-center">
+                        <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[10px] ${ORDER_STATUS_STYLE[o.status]}`}>
+                          {ORDER_STATUS_LABEL[o.status]}
+                        </span>
                       </td>
                     </tr>
                   );
@@ -490,135 +262,119 @@ export const PosOrdersPage: React.FC<PosOrdersPageProps> = ({ onNavigate, onShow
           </div>
         </div>
 
-        {/* Right Sticky Inspection Drawer */}
-        <div className="w-full xl:w-[420px] bg-white rounded-2xl border border-stone-200 shadow-md overflow-hidden flex flex-col shrink-0 sticky top-24">
-          <div className="p-4 bg-stone-50 border-b border-stone-200 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[22px]">receipt</span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-bold text-stone-900 font-mono">#{selectedOrder.code}</span>
-                  <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
-                    {selectedOrder.statusLabel}
-                  </span>
-                </div>
-                <span className="text-[11px] text-stone-500">Tạo lúc: {selectedOrder.time} • Thu ngân: Mai Ly</span>
+        {/* Detail drawer */}
+        {selected && (
+          <div className="w-full xl:w-[420px] bg-white rounded-2xl border border-stone-200 shadow-md overflow-hidden flex flex-col shrink-0 xl:sticky xl:top-24">
+            <div className="p-4 bg-stone-50 border-b border-stone-200">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-stone-900 font-mono">{selected.order_code}</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${ORDER_STATUS_STYLE[selected.status]}`}>
+                  {ORDER_STATUS_LABEL[selected.status]}
+                </span>
               </div>
-            </div>
-          </div>
-
-          <div className="p-3.5 bg-stone-100/60 border-b border-stone-200 flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
-                KH
-              </div>
-              <div>
-                <p className="font-bold text-xs sm:text-sm text-stone-900">{selectedOrder.customerName}</p>
-                <p className="text-[11px] text-amber-800">{selectedOrder.customerRank}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <span className="px-2 py-0.5 rounded bg-white font-bold text-xs text-primary border border-stone-200">
-                {selectedOrder.tableOrBuzzer}
+              <span className="text-[11px] text-stone-500">
+                {fmtDateTime(selected.created_at)} • Thu ngân: {userName(db, selected.cashier_id, 'Đặt online')}
               </span>
             </div>
-          </div>
 
-          {/* Itemized list */}
-          <div className="p-4 space-y-3 max-h-[300px] overflow-y-auto">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-stone-400">
-              Danh sách món ({selectedOrder.items.length} món)
-            </p>
-            {selectedOrder.items.map((it, idx) => (
-              <div key={idx} className="p-3 rounded-xl bg-stone-50 border border-stone-200/60 space-y-1">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-mono font-bold text-primary">{it.qty}x</span>
-                    <span className="font-bold text-xs sm:text-sm text-stone-900">{it.name}</span>
+            <div className="p-3.5 bg-stone-100/60 border-b border-stone-200 flex items-center justify-between text-xs">
+              <div>
+                <p className="font-bold text-stone-900">{orderCustomerName(db, selected)}</p>
+                <p className="text-[11px] text-stone-500">{ORDER_TYPE_LABEL[selected.order_type]}</p>
+              </div>
+              {selected.table_number && (
+                <span className="px-2 py-0.5 rounded bg-white font-bold text-xs text-primary border border-stone-200">Bàn {selected.table_number}</span>
+              )}
+            </div>
+
+            <div className="p-4 space-y-3 max-h-[300px] overflow-y-auto">
+              {orderItemsOf(db, selected.id).map(it => (
+                <div key={it.id} className="p-3 rounded-xl bg-stone-50 border border-stone-200/60 space-y-1">
+                  <div className="flex justify-between items-start gap-2">
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-mono font-bold text-primary">{it.quantity}x</span>
+                      <span className="font-bold text-xs sm:text-sm text-stone-900">{it.product_name_at_time}</span>
+                    </div>
+                    <span className={`text-[10px] font-bold ${it.is_prepared ? 'text-emerald-700' : 'text-stone-400'}`}>
+                      {it.is_prepared ? 'Đã pha' : 'Chưa pha'}
+                    </span>
                   </div>
-                </div>
-                {it.options && (
                   <div className="flex flex-wrap gap-1 pt-1">
-                    {it.options.map((opt, oIdx) => (
-                      <span key={oIdx} className="px-1.5 py-0.5 rounded bg-white text-[10px] text-stone-600 border border-stone-200">
-                        {opt}
-                      </span>
+                    {customizationTags(it.customization).map((t, i) => (
+                      <span key={i} className="px-1.5 py-0.5 rounded bg-white text-[10px] text-stone-600 border border-stone-200">{t}</span>
                     ))}
                   </div>
-                )}
-                {it.note && (
-                  <p className="text-[11px] text-amber-900 italic pt-1">Ghi chú: {it.note}</p>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Timeline */}
-          <div className="px-4 py-3 bg-stone-50 border-t border-stone-200 text-xs space-y-2">
-            <p className="font-bold text-stone-500 uppercase text-[10px] tracking-wider">Tiến trình KDS</p>
-            <div className="space-y-1.5 pl-3 border-l-2 border-stone-200">
-              <div className="flex justify-between text-stone-600">
-                <span>Nhận đơn quầy & Thanh toán:</span>
-                <span className="font-mono">{selectedOrder.time}</span>
-              </div>
-              <div className="flex justify-between text-emerald-700 font-semibold">
-                <span>Pha chế xong & Ra quầy:</span>
-                <span className="font-mono">10:41:22</span>
-              </div>
+                  {it.customization?.note && <p className="text-[11px] text-amber-900 italic">Ghi chú: {it.customization.note}</p>}
+                </div>
+              ))}
+              {selected.order_note && <p className="text-[11px] text-stone-600">Ghi chú đơn: {selected.order_note}</p>}
+              {selected.cancel_reason && <p className="text-[11px] text-rose-700">Lý do hủy: {selected.cancel_reason}</p>}
             </div>
-          </div>
 
-          {/* Payment summary */}
-          <div className="p-4 border-t border-stone-200 bg-white space-y-2 text-xs">
-            <div className="flex justify-between text-stone-600">
-              <span>Tổng thanh toán:</span>
-              <span className="font-bold text-base text-primary font-mono">
-                {selectedOrder.total.toLocaleString('vi-VN')}₫
-              </span>
-            </div>
-            <div className="flex justify-between text-stone-500 text-[11px]">
-              <span>Phương thức:</span>
-              <span className="font-semibold text-emerald-700">{selectedOrder.paymentMethod}</span>
-            </div>
-          </div>
+            {(() => {
+              const pay = paymentOf(db, selected.id);
+              return (
+                <div className="p-4 border-t border-stone-200 bg-white space-y-2 text-xs">
+                  <div className="flex justify-between text-stone-600">
+                    <span>Tổng tiền món / Giảm giá:</span>
+                    <span className="font-mono">
+                      {fmtMoney(selected.total_amount)} / -{fmtMoney(selected.discount_amount)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-stone-600">
+                    <span>Thành tiền:</span>
+                    <span className="font-bold text-base text-primary font-mono">{fmtMoney(selected.final_amount)}</span>
+                  </div>
+                  {pay && (
+                    <div className="flex justify-between items-center text-[11px]">
+                      <span className="text-stone-500">{PAYMENT_METHOD_LABEL[pay.payment_method]}</span>
+                      <span className={`px-2 py-0.5 rounded font-bold ${PAYMENT_STATUS_STYLE[pay.status]}`}>{PAYMENT_STATUS_LABEL[pay.status]}</span>
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
 
-          {/* Drawer Actions */}
-          <div className="p-4 bg-stone-100 border-t border-stone-200 space-y-2">
-            <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="p-4 bg-stone-100 border-t border-stone-200 grid grid-cols-2 gap-2 text-xs">
+              {paymentOf(db, selected.id)?.status === 'PENDING' && isOpen(selected) && (
+                <button
+                  onClick={() => handleCollectPayment(selected)}
+                  className="py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold flex items-center justify-center gap-1.5 col-span-2"
+                >
+                  <span className="material-symbols-outlined text-[18px]">payments</span>
+                  Thu tiền
+                </button>
+              )}
+              {selected.status === 'READY' && (
+                <button
+                  onClick={() => handleComplete(selected)}
+                  className="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-1.5 col-span-2"
+                >
+                  <span className="material-symbols-outlined text-[18px]">done_all</span>
+                  Trả đồ cho khách
+                </button>
+              )}
               <button
-                onClick={() => handleBuzzOrder(selectedOrder)}
-                className="py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-1.5 shadow-xs"
-              >
-                <span className="material-symbols-outlined text-[18px]">sensors</span>
-                <span>Rung thẻ #{selectedOrder.code.slice(-2)}</span>
-              </button>
-              <button
-                onClick={() => handlePrintReceipt(selectedOrder.code)}
-                className="py-2.5 rounded-xl bg-white hover:bg-stone-50 text-stone-800 font-bold flex items-center justify-center gap-1.5 border border-stone-200 shadow-2xs"
+                onClick={() => onOpenBill?.(selected.id)}
+                className="py-2.5 rounded-xl bg-white hover:bg-stone-50 text-stone-800 font-bold flex items-center justify-center gap-1.5 border border-stone-200"
               >
                 <span className="material-symbols-outlined text-[18px]">print</span>
-                <span>In Hóa đơn K80</span>
+                Hóa đơn
               </button>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                onClick={() => handlePrintSticker(selectedOrder.code)}
-                className="py-2 rounded-xl bg-white hover:bg-stone-50 text-stone-700 font-medium flex items-center justify-center gap-1 border border-stone-200"
-              >
-                <span className="material-symbols-outlined text-[16px]">local_offer</span>
-                <span>In tem ly (Stickers)</span>
-              </button>
-              <button
-                onClick={() => handleRefund(selectedOrder.code)}
-                className="py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-medium flex items-center justify-center gap-1 border border-rose-200"
-              >
-                <span className="material-symbols-outlined text-[16px]">assignment_return</span>
-                <span>Hủy / Hoàn tiền</span>
-              </button>
+              {isOpen(selected) ? (
+                <button
+                  onClick={() => handleCancel(selected)}
+                  className="py-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-medium flex items-center justify-center gap-1 border border-rose-200"
+                >
+                  <span className="material-symbols-outlined text-[16px]">cancel</span>
+                  Hủy đơn
+                </button>
+              ) : (
+                <span className="py-2.5 text-center text-stone-400">Đơn đã đóng</span>
+              )}
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

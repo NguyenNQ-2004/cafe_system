@@ -1,332 +1,312 @@
 import React, { useState } from 'react';
-import { PageRoute } from '../../types';
-import { AdminSidebar } from './AdminSidebar';
+import { PageRoute, Product } from '../../types';
+import { useDb } from '../../data/DbContext';
+import { fmtMoney, productCost, productSizes, productToppings } from '../../data/dbUtils';
+import { AdminLayout, Badge, Field, FormActions, Modal, PrimaryButton, StatCard, inputCls } from './AdminUi';
 
 interface AdminProductsPageProps {
   onNavigate: (route: PageRoute) => void;
   onShowToast?: (msg: string) => void;
 }
 
+interface ProductForm {
+  category_id: number;
+  name: string;
+  base_price: number;
+  badge: string;
+  subtitle: string;
+  description: string;
+  image_url: string;
+  is_available: boolean;
+  sizes: { name: string; delta: number }[];
+  toppings: { name: string; price: number }[];
+}
+
+const toForm = (p: Product | null, defaultCategory: number): ProductForm => ({
+  category_id: p?.category_id ?? defaultCategory,
+  name: p?.name ?? '',
+  base_price: p?.base_price ?? 0,
+  badge: p?.badge ?? '',
+  subtitle: p?.subtitle ?? '',
+  description: p?.description ?? '',
+  image_url: p?.image_url ?? '',
+  is_available: p?.is_available ?? true,
+  sizes: p ? productSizes(p).map(([name, delta]) => ({ name, delta })) : [{ name: 'M', delta: 0 }],
+  toppings: p ? productToppings(p).map(t => ({ ...t })) : []
+});
+
 export const AdminProductsPage: React.FC<AdminProductsPageProps> = ({ onNavigate, onShowToast }) => {
+  const { db, transact } = useDb();
   const [searchFilter, setSearchFilter] = useState('');
-  const [catFilter, setCatFilter] = useState('all');
+  const [catFilter, setCatFilter] = useState<number | 'all'>('all');
+  const [editing, setEditing] = useState<{ id: number | null; form: ProductForm } | null>(null);
 
-  const [products, setProducts] = useState([
-    {
-      id: 'CF-01',
-      name: 'Cà phê Muối Aura Đặc Biệt',
-      cat: 'Cà phê phin',
-      tag: 'Bán chạy #1',
-      cogs: 11850,
-      price: 45000,
-      margin: '73.7%',
-      specs: '3 Size (S/M/L) • +3 Topping',
-      hasRecipe: true,
-      active: true,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuABpqTu1yO2fvyVp7pdNTk6q4FCEB7gMQF3VB1Vop2rs9UBxLviBBYItIgUv0O1t3bLQEkNE8zmFWSJsU6v0pg_OgfHeOsSHC58wwz1JSRI0M60Oh-WjsLdjw4_nyHTsVDl7aLxNmQTERowRVHbjtJqPsoih7Pfadovuc8AFhfRmw4oTyhJTMFNQe558vFEDW9GV5ZL4tl1mDkiR2a8z7UZjXjwpc3F58Z_g8ItOQFmxSFA0pZcYDmF'
-    },
-    {
-      id: 'CF-04',
-      name: 'Espresso Sữa Hạnh Nhân',
-      cat: 'Cà phê máy',
-      tag: 'Sữa hạt cao cấp',
-      cogs: 15200,
-      price: 55000,
-      margin: '72.4%',
-      specs: '2 Size (Nóng / Lạnh)',
-      hasRecipe: true,
-      active: true,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCVLP_KwMkh7Tk5YqxZY4vw4AuHGYjGoZQfuRCf5jFi7I2w9lXJMM6bUtJU4i-mbeMPfVaUy4mG3usHqm48RlVqVV_VlRto3vo385hivBlSzvaTq7n8Sh1tFrpUIN3VLyhQrEqOFZZmS33BOyvOEPvGONRmaci23R_Uucv0UYSNa2MzbJ5yeup2sHHrUlPzgqVF3aUcAEIIOPQR0rrGBhjRI71wl8H5qd9H2EjlLJdCHnl8Q0o0vrRq'
-    },
-    {
-      id: 'TR-08',
-      name: 'Trà Ô Long Mãng Cầu Nhiệt Đới',
-      cat: 'Trà trái cây',
-      tag: 'Mãng cầu tươi Đắk Lắk',
-      cogs: 13500,
-      price: 50000,
-      margin: '73.0%',
-      specs: '2 Size (M/L) • Trân châu 3Q',
-      hasRecipe: true,
-      active: true,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDlUJXcl41-zQ_BmgX1VoqBMG6JDYluAFK2eZD1DYiYNuNdH4Yzm8YAldwzKw0QwU5545JMBF1LI9XHJImDExAwFh85xEi_Ir9pIzCsJ6by_NOup_DgKYYNq6A0zutusjQpZg4jnARy6VMT5snoPg0rc3UJkmo9JOfde0_Z8pm-VeeBIRx-1WNjoON1j_6jKNEBb7X_RAsNfr-iM0zKhtbdzwavuCFjeg8GLQYa7XX-KcZrpAjouEzn'
-    },
-    {
-      id: 'CB-01',
-      name: 'Cold Brew Cam Quế Mật Ong',
-      cat: 'Thức uống đóng chai',
-      tag: 'Ủ lạnh 16h',
-      cogs: 18000,
-      price: 58000,
-      margin: '69.0%',
-      specs: 'Chai thủy tinh 250ml',
-      hasRecipe: true,
-      active: true,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCTQeV0x1UQOt1qi4uPWgVwd1VHONCRrVar0DFvFWJSO8BWfkrcmiiguCniFo5u7OpOQwlikswWpiWY9MTznWpl0AAs_lqmxpK48RylFGUymHyjsvEgve-9fY-X_wAWhvKRp_jInbLGP6RPJ9SpfO3c8QCAEG0PeR1PWupsd99aaGF85OSPblzRRtr3dTmhs8jdfz72X2Mg-3GeOTDieaNeZdu72YIIud9uCKDuhni_j1OCFozLGFwn'
-    },
-    {
-      id: 'BK-01',
-      name: 'Croissant Bơ Pháp Nướng Nóng',
-      cat: 'Bánh nướng',
-      tag: 'Bơ lạt AOP nhập khẩu',
-      cogs: 14500,
-      price: 42000,
-      margin: '65.5%',
-      specs: 'Tiêu chuẩn kèm bơ',
-      hasRecipe: true,
-      active: true,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuD7D4fwgTtVx_I63nmfgu0mf33TJhTVQvhzWVQPXr8jDpXe64YRQKsK_mgyChy1vhH-d2Pvm5kOB67nSmt8r6jYSgkGy_3qi7dq-IMbk8LY231r3TljP6Up9Bijr3DzdD_6GQ24gUdHdFAXz0VYkvWHPb2XYgsZ5H6q6aOkV6QQsM3GEzqernkRD8JG3CAou9alOi_gTHrYl016hVM1kS7cSI9h8DcoCLSlSxfEcjkzTwka7ZPo782U'
-    },
-    {
-      id: 'IB-03',
-      name: 'Matcha Uji Đá Xay Kem Tươi',
-      cat: 'Đá xay & Matcha',
-      tag: 'Hết Whipping Cream',
-      cogs: 22000,
-      price: 62000,
-      margin: '64.5%',
-      specs: '2 Size (M/L)',
-      hasRecipe: true,
-      active: false,
-      image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCkbeWozIjRlR-OHC2F7ZPAip5eWf74KEhofOTOp6tCmj2VGxdAm2Z-l5ELZGTl96zcxqgvKNQxWsDPX5g5Y9NfqnED50nR3qnOUFbcmStZCgBl2MO8dymch4wbbWU8XfYVM3hFQZ78adtwJI2yZzLD6pH5mMNZNkIu9CxbQjF6DcrUxQNL8CwtBSpmNtcA4Y1uWDHkDe1DM1wrRpCnCDNCybh7bQTBPGQKXWYjWZ08VbfbZMI9EG8j'
-    }
-  ]);
+  const categoryName = (id: number) => db.categories.find(c => c.id === id)?.name ?? '—';
 
-  const toggleProductActive = (id: string) => {
-    setProducts(prev =>
-      prev.map(p => (p.id === id ? { ...p, active: !p.active } : p))
-    );
-    onShowToast?.(`Đã thay đổi trạng thái bán của món #${id}`);
-  };
-
-  const filteredProducts = products.filter(p => {
-    const matchSearch =
-      searchFilter.trim() === '' ||
-      p.name.toLowerCase().includes(searchFilter.toLowerCase()) ||
-      p.id.toLowerCase().includes(searchFilter.toLowerCase());
-    return matchSearch;
+  const filtered = db.products.filter(p => {
+    const q = searchFilter.trim().toLowerCase();
+    return (catFilter === 'all' || p.category_id === catFilter) && (q === '' || p.name.toLowerCase().includes(q) || String(p.id) === q);
   });
 
+  const toggleAvailable = (p: Product) => {
+    transact(tx => tx.update('products', p.id, { is_available: !p.is_available }));
+    onShowToast?.(`${p.name}: ${!p.is_available ? 'đang bán' : 'tạm ngưng bán'}.`);
+  };
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    const f = editing.form;
+    if (f.base_price < 0) {
+      onShowToast?.('Giá bán không được âm (chk_product_price).');
+      return;
+    }
+    const sizes = f.sizes.filter(s => s.name.trim());
+    const row: Omit<Product, 'id'> = {
+      category_id: f.category_id,
+      name: f.name.trim(),
+      base_price: f.base_price,
+      badge: f.badge.trim() || null,
+      subtitle: f.subtitle.trim() || null,
+      description: f.description.trim() || null,
+      image_url: f.image_url.trim() || null,
+      is_available: f.is_available,
+      variants_config: {
+        sizes: Object.fromEntries(sizes.map(s => [s.name.trim(), Number(s.delta) || 0])),
+        toppings: f.toppings.filter(t => t.name.trim()).map(t => ({ name: t.name.trim(), price: Number(t.price) || 0 }))
+      }
+    };
+    if (editing.id) {
+      transact(tx => tx.update('products', editing.id!, row));
+      onShowToast?.(`Đã cập nhật "${row.name}".`);
+    } else {
+      transact(tx => tx.insert('products', row));
+      onShowToast?.(`Đã thêm món "${row.name}". Hãy khai báo công thức (BOM) cho món.`);
+    }
+    setEditing(null);
+  };
+
+  const setForm = (patch: Partial<ProductForm>) => setEditing(prev => (prev ? { ...prev, form: { ...prev.form, ...patch } } : prev));
+
+  const withCost = db.products.map(p => ({ p, cost: productCost(db, p.id) }));
+
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col lg:flex-row pb-12">
-      <AdminSidebar currentRoute="admin-products" onNavigate={onNavigate} onShowToast={onShowToast} />
-
-      <main className="flex-1 p-4 sm:p-6 space-y-4 max-w-7xl">
-        {/* Page Header */}
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-3">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-xs text-stone-500">
-                <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded font-mono uppercase">
-                  SKU Catalog v2.4
-                </span>
-                <span>• Đồng bộ 12 trạm POS tự động</span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight mt-1">
-                Quản lý Sản phẩm & Định giá (Product Management)
-              </h1>
-              <p className="text-xs text-stone-500">
-                Quản lý danh sách 45 món đồ uống & bánh nướng, thiết lập giá bán niêm yết, cấu hình size ly và liên kết công thức pha chế.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 flex-wrap text-xs">
-              <button
-                onClick={() => onShowToast?.('Đang tải danh sách bảng giá POS ra file Excel...')}
-                className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold rounded-xl border border-stone-200 flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[16px]">receipt_long</span>
-                <span>Xuất bảng giá POS</span>
-              </button>
-              <button
-                onClick={() => onShowToast?.('Đã mở công cụ cập nhật giá niêm yết hàng loạt theo %')}
-                className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold rounded-xl border border-stone-200 flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[16px]">price_change</span>
-                <span>Cập nhật giá hàng loạt</span>
-              </button>
-              <button
-                onClick={() => {
-                  const newSku = prompt('Nhập tên món mới muốn thêm vào menu:');
-                  if (newSku) {
-                    onShowToast?.(`Đã tạo bản nháp món mới "${newSku}". Hãy gán công thức pha chế BOM!`);
-                  }
-                }}
-                className="px-3.5 py-2 bg-primary hover:bg-primary-container text-white font-bold rounded-xl shadow-xs flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[16px]">add</span>
-                <span>Thêm món mới (+)</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Bento Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-stone-100 text-xs">
-            <div className="p-3 bg-stone-50 rounded-xl border border-stone-200">
-              <span className="text-[10px] text-stone-400 uppercase font-bold block">Tổng số món</span>
-              <span className="text-xl font-black text-stone-900 font-mono mt-0.5 block">45 SKU</span>
-              <span className="text-[11px] text-emerald-700 font-semibold">+2 món mới tuần này</span>
-            </div>
-            <div className="p-3 bg-stone-50 rounded-xl border border-stone-200">
-              <span className="text-[10px] text-stone-400 uppercase font-bold block">Đang kinh doanh</span>
-              <span className="text-xl font-black text-stone-900 font-mono mt-0.5 block">42</span>
-              <span className="text-[11px] text-emerald-700 font-semibold">93.3% sẵn sàng</span>
-            </div>
-            <div className="p-3 bg-stone-50 rounded-xl border border-stone-200">
-              <span className="text-[10px] text-stone-400 uppercase font-bold block">Tạm hết hàng</span>
-              <span className="text-xl font-black text-rose-700 font-mono mt-0.5 block">03 Khóa POS</span>
-              <span className="text-[11px] text-stone-500">Cần nhập Whipping Cream</span>
-            </div>
-            <div className="p-3 bg-stone-50 rounded-xl border border-stone-200">
-              <span className="text-[10px] text-stone-400 uppercase font-bold block">Margin cao (&gt;70%)</span>
-              <span className="text-xl font-black text-primary font-mono mt-0.5 block">28 SKU</span>
-              <span className="text-[11px] text-stone-500">Biên lợi nhuận TB 71.8%</span>
-            </div>
-          </div>
+    <AdminLayout
+      route="admin-products"
+      onNavigate={onNavigate}
+      onShowToast={onShowToast}
+      table="products"
+      title="Quản lý sản phẩm & giá bán"
+      subtitle="Giá vốn được tính từ công thức (product_ingredients) × giá nhập gần nhất (purchase_order_items)."
+      actions={
+        <PrimaryButton icon="add" onClick={() => setEditing({ id: null, form: toForm(null, db.categories[0]?.id ?? 1) })}>
+          Thêm món mới
+        </PrimaryButton>
+      }
+      stats={
+        <>
+          <StatCard label="Tổng số món" value={db.products.length} />
+          <StatCard label="Đang bán" value={db.products.filter(p => p.is_available).length} tone="success" />
+          <StatCard label="Tạm ngưng" value={db.products.filter(p => !p.is_available).length} tone="danger" />
+          <StatCard label="Chưa có công thức" value={withCost.filter(x => !db.product_ingredients.some(b => b.product_id === x.p.id)).length} />
+        </>
+      }
+    >
+      <div className="p-4 bg-white rounded-2xl border border-stone-200 shadow-2xs flex flex-col md:flex-row justify-between items-center gap-3">
+        <div className="relative flex-1 max-w-md w-full">
+          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-[18px]">search</span>
+          <input
+            value={searchFilter}
+            onChange={e => setSearchFilter(e.target.value)}
+            placeholder="Tìm theo tên hoặc mã món..."
+            className="w-full h-10 pl-9 pr-4 rounded-xl bg-stone-50 border border-stone-200 text-xs focus:outline-none focus:border-primary"
+          />
         </div>
+        <select
+          value={catFilter}
+          onChange={e => setCatFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+          className="h-10 px-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-xs"
+        >
+          <option value="all">Tất cả danh mục ({db.categories.length})</option>
+          {db.categories.map(c => (
+            <option key={c.id} value={c.id}>{c.name}</option>
+          ))}
+        </select>
+      </div>
 
-        {/* Search & Filters */}
-        <div className="p-4 bg-white rounded-2xl border border-stone-200 shadow-2xs flex flex-col md:flex-row justify-between items-center gap-3">
-          <div className="relative flex-1 max-w-md w-full">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-[18px]">
-              search
-            </span>
-            <input
-              type="text"
-              value={searchFilter}
-              onChange={e => setSearchFilter(e.target.value)}
-              placeholder="Tìm theo tên món hoặc mã SKU (#CF-01, Trà Ô Long, Matcha...)"
-              className="w-full h-10 pl-9 pr-4 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 focus:outline-none focus:border-primary"
-            />
-          </div>
-
-          <div className="flex items-center gap-2 text-xs">
-            <select
-              value={catFilter}
-              onChange={e => setCatFilter(e.target.value)}
-              className="h-10 px-3 bg-stone-50 border border-stone-200 rounded-xl text-stone-700 text-xs"
-            >
-              <option value="all">Tất cả danh mục (5)</option>
-              <option value="espresso">Cà phê máy</option>
-              <option value="phin">Cà phê phin</option>
-              <option value="fruit-tea">Trà trái cây</option>
-              <option value="bottled">Thức uống đóng chai</option>
-            </select>
-          </div>
-        </div>
-
-        {/* Master Table */}
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-2xs overflow-hidden">
-          <div className="overflow-x-auto text-xs">
-            <table className="w-full text-left">
-              <thead className="bg-stone-50 text-stone-500 uppercase text-[10px] font-bold border-b border-stone-200">
-                <tr>
-                  <th className="py-3 px-4">Sản Phẩm & SKU</th>
-                  <th className="py-3 px-4">Danh Mục</th>
-                  <th className="py-3 px-4 text-right">Giá Vốn (COGS)</th>
-                  <th className="py-3 px-4 text-right">Giá Bán POS</th>
-                  <th className="py-3 px-4 text-center">Margin (%)</th>
-                  <th className="py-3 px-4">Quy Cách & Size</th>
-                  <th className="py-3 px-4 text-center">Trạng Thái</th>
-                  <th className="py-3 px-4 text-right">Thao Tác</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-stone-100">
-                {filteredProducts.map(prod => (
-                  <tr key={prod.id} className="hover:bg-stone-50">
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-2xs overflow-hidden">
+        <div className="overflow-x-auto text-xs">
+          <table className="w-full text-left">
+            <thead className="bg-stone-50 text-stone-500 uppercase text-[10px] font-bold border-b border-stone-200">
+              <tr>
+                <th className="py-3 px-4">Sản phẩm</th>
+                <th className="py-3 px-4">Danh mục</th>
+                <th className="py-3 px-4">Size / Topping</th>
+                <th className="py-3 px-4 text-right">Giá vốn</th>
+                <th className="py-3 px-4 text-right">Giá bán</th>
+                <th className="py-3 px-4 text-center">Lợi nhuận</th>
+                <th className="py-3 px-4 text-center">Trạng thái</th>
+                <th className="py-3 px-4 text-right">Thao tác</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-stone-100">
+              {filtered.map(p => {
+                const cost = productCost(db, p.id);
+                const margin = cost !== null && p.base_price > 0 ? Math.round(((p.base_price - cost) / p.base_price) * 100) : null;
+                return (
+                  <tr key={p.id} className="hover:bg-stone-50">
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-3">
-                        <img
-                          src={prod.image}
-                          alt={prod.name}
-                          className="w-11 h-11 rounded-lg object-cover bg-stone-100 shrink-0"
-                        />
+                        <img src={p.image_url ?? ''} alt={p.name} className="w-11 h-11 rounded-lg object-cover bg-stone-100 shrink-0" />
                         <div>
-                          <strong className="text-stone-900 block text-xs">{prod.name}</strong>
+                          <strong className="text-stone-900 block">{p.name}</strong>
                           <div className="flex items-center gap-1.5 mt-0.5">
-                            <span className="font-mono text-primary font-bold text-[10px] bg-primary/10 px-1 rounded">
-                              #{prod.id}
-                            </span>
-                            <span className="text-[10px] text-stone-400">{prod.tag}</span>
+                            <span className="font-mono text-primary font-bold text-[10px] bg-primary/10 px-1 rounded">#{p.id}</span>
+                            {p.badge && <span className="text-[10px] text-amber-700 font-bold">{p.badge}</span>}
+                            {p.subtitle && <span className="text-[10px] text-stone-400">{p.subtitle}</span>}
                           </div>
                         </div>
                       </div>
                     </td>
-
                     <td className="py-3 px-4">
-                      <span className="px-2 py-0.5 rounded bg-stone-100 text-stone-700 text-[10px] font-semibold">
-                        {prod.cat}
-                      </span>
+                      <Badge className="bg-stone-100 text-stone-700">{categoryName(p.category_id)}</Badge>
                     </td>
-
-                    <td className="py-3 px-4 text-right font-mono text-stone-500">
-                      {prod.cogs.toLocaleString('vi-VN')}₫
+                    <td className="py-3 px-4 text-[11px] text-stone-600">
+                      {productSizes(p).map(([n, d]) => `${n}${d ? ` (+${d / 1000}k)` : ''}`).join(', ')}
+                      {productToppings(p).length > 0 && <span className="block text-stone-400">{productToppings(p).length} topping</span>}
                     </td>
-
-                    <td className="py-3 px-4 text-right font-mono font-bold text-stone-900 text-xs sm:text-sm">
-                      {prod.price.toLocaleString('vi-VN')}₫
-                    </td>
-
+                    <td className="py-3 px-4 text-right font-mono text-stone-500">{cost === null ? '—' : fmtMoney(cost)}</td>
+                    <td className="py-3 px-4 text-right font-mono font-bold text-stone-900">{fmtMoney(p.base_price)}</td>
                     <td className="py-3 px-4 text-center font-mono">
-                      <span className="px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-bold text-[10px]">
-                        {prod.margin}
-                      </span>
+                      {margin === null ? <span className="text-stone-400">—</span> : <Badge className="bg-emerald-50 text-emerald-800">{margin}%</Badge>}
                     </td>
-
-                    <td className="py-3 px-4 text-[11px] text-stone-600">{prod.specs}</td>
-
                     <td className="py-3 px-4 text-center">
                       <button
-                        onClick={() => toggleProductActive(prod.id)}
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${
-                          prod.active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-                        }`}
+                        onClick={() => toggleAvailable(p)}
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${p.is_available ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}
                       >
-                        {prod.active ? 'Đang bán' : 'Hết hàng'}
+                        {p.is_available ? 'Đang bán' : 'Tạm ngưng'}
                       </button>
                     </td>
-
                     <td className="py-3 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1 text-stone-400">
-                        <button
-                          onClick={() => onShowToast?.(`Đang mở popup chỉnh sửa giá món #${prod.id}`)}
-                          className="p-1 hover:text-stone-800 rounded"
-                          title="Chỉnh sửa giá"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">edit</span>
-                        </button>
-                      </div>
+                      <button onClick={() => setEditing({ id: p.id, form: toForm(p, p.category_id) })} className="p-1 text-stone-400 hover:text-stone-800 rounded" title="Sửa">
+                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                      </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
+      </div>
 
-        {/* Sync Banner */}
-        <div className="p-4 bg-gradient-to-r from-primary/10 via-stone-50 to-white rounded-2xl border border-stone-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center font-bold">
-              <span className="material-symbols-outlined text-[20px]">sync_saved_locally</span>
+      {editing && (
+        <Modal title={editing.id ? `Sửa sản phẩm #${editing.id}` : 'Thêm sản phẩm'} onClose={() => setEditing(null)} wide>
+          <form onSubmit={handleSave} className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Field label="Tên món *" column="name">
+                <input required maxLength={150} value={editing.form.name} onChange={e => setForm({ name: e.target.value })} className={inputCls} />
+              </Field>
+              <Field label="Danh mục *" column="category_id">
+                <select value={editing.form.category_id} onChange={e => setForm({ category_id: Number(e.target.value) })} className={inputCls}>
+                  {db.categories.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Giá cơ bản (VNĐ) *" column="base_price">
+                <input type="number" min={0} required value={editing.form.base_price} onChange={e => setForm({ base_price: Number(e.target.value) })} className={inputCls} />
+              </Field>
+              <Field label="Nhãn" column="badge">
+                <input list="badge-options" maxLength={50} value={editing.form.badge} onChange={e => setForm({ badge: e.target.value })} className={inputCls} />
+                <datalist id="badge-options">
+                  <option value="BÁN CHẠY" />
+                  <option value="MÓN MỚI" />
+                </datalist>
+              </Field>
+              <Field label="Phụ đề" column="subtitle">
+                <input maxLength={150} value={editing.form.subtitle} onChange={e => setForm({ subtitle: e.target.value })} className={inputCls} />
+              </Field>
+              <Field label="Ảnh (URL)" column="image_url">
+                <input maxLength={500} value={editing.form.image_url} onChange={e => setForm({ image_url: e.target.value })} className={inputCls} />
+              </Field>
             </div>
-            <div>
-              <strong className="text-stone-900 block text-xs sm:text-sm">
-                Tự động khấu hao & liên kết Định mức nguyên liệu (Recipe ERP)
-              </strong>
-              <span className="text-stone-500">
-                Khi thu ngân hoàn tất đơn trên POS, lượng Cà phê Robusta Mộc, Sữa tươi và Siro sẽ tự động trừ trực tiếp vào Kho nguyên liệu.
-              </span>
+            <Field label="Mô tả" column="description">
+              <textarea rows={2} value={editing.form.description} onChange={e => setForm({ description: e.target.value })} className={inputCls} />
+            </Field>
+
+            {/* variants_config.sizes */}
+            <div className="p-3 rounded-xl border border-stone-200 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-stone-600">
+                <span>Size & phụ thu</span>
+                <span className="font-mono text-[10px] font-normal text-stone-400">variants_config.sizes</span>
+              </div>
+              {editing.form.sizes.map((s, i) => (
+                <div key={i} className="flex gap-2">
+                  <input
+                    value={s.name}
+                    onChange={e => setForm({ sizes: editing.form.sizes.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)) })}
+                    placeholder="Tên size (M, L, Chai 250ml...)"
+                    className={inputCls}
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    value={s.delta}
+                    onChange={e => setForm({ sizes: editing.form.sizes.map((x, idx) => (idx === i ? { ...x, delta: Number(e.target.value) } : x)) })}
+                    className={`${inputCls} w-32`}
+                  />
+                  <button type="button" onClick={() => setForm({ sizes: editing.form.sizes.filter((_, idx) => idx !== i) })} className="px-2 text-stone-400 hover:text-rose-600">
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                </div>
+              ))}
+              <button type="button" onClick={() => setForm({ sizes: [...editing.form.sizes, { name: '', delta: 0 }] })} className="text-primary text-xs font-bold hover:underline">
+                + Thêm size
+              </button>
             </div>
-          </div>
-          <button
-            onClick={() => onNavigate('admin-stock')}
-            className="px-3.5 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary-container shrink-0"
-          >
-            Kiểm tra tồn kho →
-          </button>
-        </div>
-      </main>
-    </div>
+
+            {/* variants_config.toppings */}
+            <div className="p-3 rounded-xl border border-stone-200 space-y-2">
+              <div className="flex items-center justify-between text-xs font-bold text-stone-600">
+                <span>Topping & giá</span>
+                <span className="font-mono text-[10px] font-normal text-stone-400">variants_config.toppings</span>
+              </div>
+              {editing.form.toppings.map((t, i) => (
+                <div key={i} className="flex gap-2">
+                  <input
+                    value={t.name}
+                    onChange={e => setForm({ toppings: editing.form.toppings.map((x, idx) => (idx === i ? { ...x, name: e.target.value } : x)) })}
+                    placeholder="Tên topping"
+                    className={inputCls}
+                  />
+                  <input
+                    type="number"
+                    min={0}
+                    value={t.price}
+                    onChange={e => setForm({ toppings: editing.form.toppings.map((x, idx) => (idx === i ? { ...x, price: Number(e.target.value) } : x)) })}
+                    className={`${inputCls} w-32`}
+                  />
+                  <button type="button" onClick={() => setForm({ toppings: editing.form.toppings.filter((_, idx) => idx !== i) })} className="px-2 text-stone-400 hover:text-rose-600">
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                </div>
+              ))}
+              <button type="button" onClick={() => setForm({ toppings: [...editing.form.toppings, { name: '', price: 0 }] })} className="text-primary text-xs font-bold hover:underline">
+                + Thêm topping
+              </button>
+            </div>
+
+            <label className="flex items-center gap-2 text-xs font-semibold text-stone-700">
+              <input type="checkbox" checked={editing.form.is_available} onChange={e => setForm({ is_available: e.target.checked })} className="accent-primary w-4 h-4" />
+              Đang bán <span className="font-mono text-[10px] text-stone-400">is_available</span>
+            </label>
+
+            <FormActions onCancel={() => setEditing(null)} submitLabel={editing.id ? 'Lưu thay đổi' : 'Thêm sản phẩm'} />
+          </form>
+        </Modal>
+      )}
+    </AdminLayout>
   );
 };

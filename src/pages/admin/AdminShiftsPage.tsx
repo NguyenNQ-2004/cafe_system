@@ -1,83 +1,100 @@
-import React from 'react';
-import { PageRoute } from '../../types';
-import { AdminSidebar } from './AdminSidebar';
+import React, { useState } from 'react';
+import { PageRoute, ShiftName } from '../../types';
+import { useDb } from '../../data/DbContext';
+import { SCHEDULE_STATUS_LABEL, SHIFT_LABEL, SHIFT_SETTING_KEY, shiftTimeRange } from '../../data/dbUtils';
+import { AdminLayout, Field, FormActions, Modal, inputCls } from './AdminUi';
 
 interface AdminShiftsPageProps {
   onNavigate: (route: PageRoute) => void;
   onShowToast?: (msg: string) => void;
 }
 
+const SHIFTS: ShiftName[] = ['MORNING', 'AFTERNOON', 'EVENING'];
+
 export const AdminShiftsPage: React.FC<AdminShiftsPageProps> = ({ onNavigate, onShowToast }) => {
+  const { db, transact } = useDb();
+  const [editing, setEditing] = useState<{ shift: ShiftName; start: string; end: string } | null>(null);
+
+  const openEdit = (shift: ShiftName) => {
+    const [start = '', end = ''] = shiftTimeRange(db, shift).split('-');
+    setEditing({ shift, start, end });
+  };
+
+  const handleSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editing) return;
+    if (editing.start >= editing.end) {
+      onShowToast?.('Giờ kết thúc phải sau giờ bắt đầu.');
+      return;
+    }
+    transact(tx => tx.setSetting(SHIFT_SETTING_KEY[editing.shift], `${editing.start}-${editing.end}`));
+    onShowToast?.(`Đã cập nhật giờ ${SHIFT_LABEL[editing.shift]}.`);
+    setEditing(null);
+  };
+
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col lg:flex-row pb-12">
-      <AdminSidebar currentRoute="admin-shifts" onNavigate={onNavigate} onShowToast={onShowToast} />
-      <main className="flex-1 p-4 sm:p-6 space-y-4 max-w-7xl relative">
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">Cấu hình ca làm việc</h1>
-          <p className="text-xs text-stone-500">Định nghĩa các ca làm việc chuẩn (Sáng, Chiều, Tối) trong hệ thống.</p>
-        </div>
-
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-2xs overflow-hidden animate-in fade-in duration-300">
-          <div className="p-4 border-b border-stone-100 flex justify-between items-center bg-stone-50/50">
-            <h2 className="font-bold text-sm text-stone-800">Danh sách Ca làm việc</h2>
-            <button 
-              onClick={() => onShowToast?.('Mở popup tạo ca làm việc...')}
-              className="px-4 py-2 bg-stone-900 text-white text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-stone-800 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[16px]">add</span>
-              Tạo ca làm
-            </button>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
-            {/* Shift Card */}
-            <div className="border border-stone-200 rounded-xl p-4 flex flex-col hover:border-primary transition-colors cursor-pointer group">
+    <AdminLayout
+      route="admin-shifts"
+      onNavigate={onNavigate}
+      onShowToast={onShowToast}
+      table="work_schedules.shift_name + shop_settings"
+      title="Khung giờ ca làm việc"
+      subtitle="Database có 3 ca cố định (MORNING, AFTERNOON, EVENING). Giờ của từng ca được lưu trong shop_settings."
+    >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {SHIFTS.map(shift => {
+          const schedules = db.work_schedules.filter(s => s.shift_name === shift);
+          return (
+            <div key={shift} className="bg-white border border-stone-200 rounded-2xl p-5 flex flex-col shadow-2xs">
               <div className="flex justify-between items-start mb-2">
-                <h3 className="font-bold text-stone-900 text-sm group-hover:text-primary transition-colors">Ca Sáng</h3>
-                <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase">Active</span>
+                <div>
+                  <h3 className="font-bold text-stone-900 text-base">{SHIFT_LABEL[shift]}</h3>
+                  <span className="font-mono text-[10px] text-stone-400">{shift} • {SHIFT_SETTING_KEY[shift]}</span>
+                </div>
+                <span className="material-symbols-outlined text-primary">schedule</span>
               </div>
-              <div className="flex items-center gap-2 text-stone-600 text-xs mb-3">
-                <span className="material-symbols-outlined text-[14px]">schedule</span>
-                <span>07:00 - 12:00</span>
+              <div className="flex items-center gap-2 text-stone-800 text-lg font-bold font-mono mb-3">
+                {shiftTimeRange(db, shift) || 'Chưa cấu hình'}
               </div>
-              <p className="text-[11px] text-stone-500 mb-4 line-clamp-2">Ca sáng chuẩn, cần 1 thu ngân và 1 barista.</p>
-              <div className="mt-auto pt-3 border-t border-stone-100 flex justify-end">
-                <button className="text-xs font-bold text-primary hover:underline">Chỉnh sửa</button>
+              <div className="text-xs text-stone-500 space-y-1 mb-4">
+                <p>Tổng lượt xếp ca: <strong className="text-stone-800">{schedules.length}</strong></p>
+                {(['SCHEDULED', 'PRESENT', 'COMPLETED', 'ABSENT'] as const).map(st => (
+                  <p key={st}>
+                    {SCHEDULE_STATUS_LABEL[st]}: <strong className="text-stone-800">{schedules.filter(s => s.status === st).length}</strong>
+                  </p>
+                ))}
+              </div>
+              <div className="mt-auto pt-3 border-t border-stone-100 flex justify-between">
+                <button onClick={() => onNavigate('admin-schedules')} className="text-xs font-semibold text-stone-500 hover:underline">
+                  Xem lịch phân ca
+                </button>
+                <button onClick={() => openEdit(shift)} className="text-xs font-bold text-primary hover:underline">
+                  Sửa giờ ca
+                </button>
               </div>
             </div>
+          );
+        })}
+      </div>
 
-            <div className="border border-stone-200 rounded-xl p-4 flex flex-col hover:border-primary transition-colors cursor-pointer group">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-bold text-stone-900 text-sm group-hover:text-primary transition-colors">Ca Chiều</h3>
-                <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase">Active</span>
-              </div>
-              <div className="flex items-center gap-2 text-stone-600 text-xs mb-3">
-                <span className="material-symbols-outlined text-[14px]">schedule</span>
-                <span>12:00 - 17:00</span>
-              </div>
-              <p className="text-[11px] text-stone-500 mb-4 line-clamp-2">Ca chiều, khách thường đông vào tầm 13h - 14h.</p>
-              <div className="mt-auto pt-3 border-t border-stone-100 flex justify-end">
-                <button className="text-xs font-bold text-primary hover:underline">Chỉnh sửa</button>
-              </div>
+      {editing && (
+        <Modal title={`Giờ ${SHIFT_LABEL[editing.shift]}`} onClose={() => setEditing(null)}>
+          <form onSubmit={handleSave} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Bắt đầu">
+                <input type="time" required value={editing.start} onChange={e => setEditing({ ...editing, start: e.target.value })} className={inputCls} />
+              </Field>
+              <Field label="Kết thúc">
+                <input type="time" required value={editing.end} onChange={e => setEditing({ ...editing, end: e.target.value })} className={inputCls} />
+              </Field>
             </div>
-
-            <div className="border border-stone-200 rounded-xl p-4 flex flex-col hover:border-primary transition-colors cursor-pointer group">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-bold text-stone-900 text-sm group-hover:text-primary transition-colors">Ca Tối</h3>
-                <span className="px-2 py-1 bg-emerald-100 text-emerald-700 text-[10px] font-bold rounded uppercase">Active</span>
-              </div>
-              <div className="flex items-center gap-2 text-stone-600 text-xs mb-3">
-                <span className="material-symbols-outlined text-[14px]">schedule</span>
-                <span>17:00 - 22:00</span>
-              </div>
-              <p className="text-[11px] text-stone-500 mb-4 line-clamp-2">Ca tối cần dọn dẹp và chốt sổ cuối ngày.</p>
-              <div className="mt-auto pt-3 border-t border-stone-100 flex justify-end">
-                <button className="text-xs font-bold text-primary hover:underline">Chỉnh sửa</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </main>
-    </div>
+            <p className="text-[11px] text-stone-500">
+              Lưu vào shop_settings.{SHIFT_SETTING_KEY[editing.shift]} dạng "HH:mm-HH:mm".
+            </p>
+            <FormActions onCancel={() => setEditing(null)} submitLabel="Lưu giờ ca" />
+          </form>
+        </Modal>
+      )}
+    </AdminLayout>
   );
 };

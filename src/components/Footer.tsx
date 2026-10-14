@@ -1,11 +1,15 @@
 import React from 'react';
 import { PageRoute } from '../types';
+import { useDb } from '../data/DbContext';
+import { getSetting } from '../data/dbUtils';
 
 interface FooterProps {
   onNavigate?: (route: PageRoute) => void;
 }
 
 export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+  const { db } = useDb();
+  const hotline = getSetting(db, 'store_hotline');
   return (
     <footer className="w-full bg-surface-container-lowest border-t border-surface-container-highest">
       <div className="w-full px-margin-lg py-space-xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter-lg">
@@ -25,35 +29,23 @@ export const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div className="flex items-center gap-space-sm mt-space-sm">
             <span className="font-label-md text-label-md text-on-surface-variant">Hotline hỗ trợ:</span>
             <a
-              href="tel:19006868"
+              href={`tel:${hotline.replace(/\s/g, '')}`}
               className="font-headline-sm text-headline-sm text-primary tabular-data font-bold hover:underline"
             >
-              1900 6868
+              {hotline}
             </a>
           </div>
         </div>
 
-        {/* Col 2: Chi nhánh */}
+        {/* Col 2: Địa chỉ cửa hàng (shop_settings.store_address) */}
         <div className="flex flex-col gap-space-sm">
           <h4 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-            Hệ thống chi nhánh
+            Địa chỉ cửa hàng
           </h4>
           <ul className="flex flex-col gap-space-xs font-body-sm text-body-sm text-on-surface-variant">
             <li className="flex items-start gap-space-xs">
               <span className="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5">location_on</span>
-              <span>Chi nhánh 01: 28 Phố Tràng Tiền, Hoàn Kiếm, Hà Nội</span>
-            </li>
-            <li className="flex items-start gap-space-xs">
-              <span className="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5">location_on</span>
-              <span>Chi nhánh 02: 120 Hoàng Hoa Thám, Ba Đình, Hà Nội</span>
-            </li>
-            <li className="flex items-start gap-space-xs">
-              <span className="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5">location_on</span>
-              <span>Chi nhánh 03: 45 Lê Duẩn, Bến Nghé, Quận 1, TP. HCM</span>
-            </li>
-            <li className="flex items-start gap-space-xs">
-              <span className="material-symbols-outlined text-[16px] text-primary shrink-0 mt-0.5">location_on</span>
-              <span>Chi nhánh 04: 88 Thảo Điền, TP. Thủ Đức, TP. HCM</span>
+              <span>{getSetting(db, 'store_address')}</span>
             </li>
           </ul>
         </div>

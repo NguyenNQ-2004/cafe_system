@@ -1,22 +1,66 @@
 import React, { useState } from 'react';
 import { PageRoute } from '../../types';
 import { DeliverySidebar } from './DeliverySidebar';
+import { useDb } from '../../data/DbContext';
+import {
+  PAYMENT_METHOD_LABEL,
+  PAYMENT_STATUS_LABEL,
+  SCHEDULE_STATUS_LABEL,
+  SHIFT_LABEL,
+  fmtDate,
+  fmtDateTime,
+  fmtMoney,
+  nowSql,
+  paymentOf
+} from '../../data/dbUtils';
 
 interface DeliveryCodPageProps {
   onNavigate: (route: PageRoute) => void;
   onShowToast?: (msg: string) => void;
 }
 
-export const DeliveryCodPage: React.FC<DeliveryCodPageProps> = ({ onNavigate, onShowToast }) => {
-  const [remitMethod, setRemitMethod] = useState<'cash' | 'qr'>('cash');
-  const [driverPin, setDriverPin] = useState('8821');
-  const [isZClosed, setIsZClosed] = useState(false);
+const DENOMS = [500000, 200000, 100000, 50000, 20000, 10000];
 
-  const handleCloseZDelivery = () => {
-    setIsZClosed(true);
-    onShowToast?.(
-      'Bàn giao ca thành công! Đã chốt phiếu Z-DELIVERY #902-2410 và ghi nhận két quầy thu ngân Trần Mai Ly.'
+export const DeliveryCodPage: React.FC<DeliveryCodPageProps> = ({ onNavigate, onShowToast }) => {
+  const { db, session, transact } = useDb();
+  const me = session.shipperId;
+  const schedules = db.work_schedules.filter(s => s.user_id === me).sort((a, b) => (a.work_date < b.work_date ? 1 : -1));
+  const [scheduleId, setScheduleId] = useState<number | null>(
+    schedules.find(s => s.status !== 'COMPLETED')?.id ?? schedules[0]?.id ?? null
+  );
+  const [denoms, setDenoms] = useState<Record<number, number>>({});
+  const [note, setNote] = useState('');
+  const schedule = schedules.find(s => s.id === scheduleId);
+
+  // Đơn online mình giao trong ngày của ca
+  const myOrders = db.orders
+    .filter(o => o.order_type === 'ONLINE' && o.shipper_id === me && (!schedule || o.created_at.startsWith(schedule.work_date)))
+    .sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
+  const rows = myOrders.map(o => ({ o, pay: paymentOf(db, o.id) }));
+  const codCollected = rows
+    .filter(r => r.o.status === 'COMPLETED' && r.pay?.payment_method === 'CASH' && r.pay.status === 'SUCCESS')
+    .reduce((s, r) => s + (r.pay?.amount ?? 0), 0);
+  const prepaid = rows
+    .filter(r => r.o.status === 'COMPLETED' && r.pay && r.pay.payment_method !== 'CASH' && r.pay.status === 'SUCCESS')
+    .reduce((s, r) => s + (r.pay?.amount ?? 0), 0);
+  const counted = DENOMS.reduce((s, d) => s + d * (denoms[d] ?? 0), 0);
+  const isClosed = schedule?.status === 'COMPLETED';
+
+  const handleRemit = () => {
+    if (!schedule) {
+      onShowToast?.('Bạn chưa có lịch ca để ghi nhận nộp tiền.');
+      return;
+    }
+    transact(tx =>
+      tx.update('work_schedules', schedule.id, {
+        ending_cash_system: codCollected,
+        ending_cash_actual: counted,
+        check_out_time: nowSql(),
+        status: 'COMPLETED',
+        note: [schedule.note, `Nộp COD ${fmtMoney(counted)}`, note.trim()].filter(Boolean).join(' | ')
+      })
     );
+    onShowToast?.(`Đã ghi nhận nộp ${fmtMoney(counted)} tiền COD và đóng ca giao hàng.`);
   };
 
   return (
@@ -24,292 +68,128 @@ export const DeliveryCodPage: React.FC<DeliveryCodPageProps> = ({ onNavigate, on
       <DeliverySidebar currentRoute="delivery-cod" onNavigate={onNavigate} onShowToast={onShowToast} />
 
       <main className="flex-1 p-4 sm:p-6 space-y-4 max-w-7xl">
-        {/* Top Header */}
         <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-3">
           <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2 flex-wrap text-xs text-stone-500">
-                <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                  Chốt ca giao hàng
-                </span>
-                <span>•</span>
-                <span>Hôm nay: 24/10/2024</span>
-                <span>•</span>
-                <span>Ca Toàn Thời Gian (07:00 - 16:00)</span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight">
-                Đối soát Tiền thu hộ COD & Doanh thu Ca (DX-902)
-              </h1>
-              <p className="text-xs text-stone-500">
-                Kiểm đếm doanh thu thu hộ thực tế, đối soát với đơn hàng hoàn tất trước khi bàn giao cho thu ngân chốt ca.
-              </p>
+            <div>
+              <span className="bg-primary text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">Chốt ca giao hàng</span>
+              <h1 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight mt-1">Đối soát tiền thu hộ COD</h1>
+              <p className="text-xs text-stone-500">Đối chiếu tiền mặt đã thu với payments, sau đó nộp và chốt ca (work_schedules).</p>
             </div>
-
-            <div className="flex items-center gap-2 flex-wrap text-xs">
-              <button
-                onClick={() => onShowToast?.('Đang in phiếu đối soát COD K80...')}
-                className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold rounded-xl border border-stone-200 flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[16px]">receipt_long</span>
-                <span>In K80</span>
-              </button>
-              <button
-                onClick={() => onShowToast?.('Đã xuất file đối soát PDF ca ship')}
-                className="px-3.5 py-2 bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold rounded-xl border border-stone-200 flex items-center gap-1.5"
-              >
-                <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
-                <span>Xuất PDF</span>
-              </button>
-            </div>
+            <select
+              value={scheduleId ?? ''}
+              onChange={e => setScheduleId(Number(e.target.value) || null)}
+              className="h-10 px-3 rounded-xl border border-stone-300 text-xs bg-white"
+            >
+              {schedules.length === 0 && <option value="">Chưa có lịch ca</option>}
+              {schedules.map(s => (
+                <option key={s.id} value={s.id}>
+                  {SHIFT_LABEL[s.shift_name]} {fmtDate(s.work_date)} - {SCHEDULE_STATUS_LABEL[s.status]}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* KPI metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 pt-3 border-t border-stone-100">
             <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-200">
-              <span className="text-[10px] uppercase font-bold text-stone-400 block">Tiền COD Thực Thu</span>
-              <span className="text-2xl font-black text-stone-900 font-mono mt-0.5 block">1.450.000₫</span>
-              <span className="text-[11px] text-stone-500 mt-1 block">7 đơn tiền mặt</span>
+              <span className="text-[10px] uppercase font-bold text-stone-400 block">Tiền COD đã thu</span>
+              <span className="text-2xl font-black text-stone-900 font-mono mt-0.5 block">{fmtMoney(codCollected)}</span>
             </div>
-
             <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-200">
-              <span className="text-[10px] uppercase font-bold text-stone-400 block">Khách Thanh Toán Online</span>
-              <span className="text-2xl font-black text-stone-600 font-mono mt-0.5 block">1.620.000₫</span>
-              <span className="text-[11px] text-stone-500 mt-1 block">VietQR / Thẻ (0đ COD)</span>
+              <span className="text-[10px] uppercase font-bold text-stone-400 block">Khách đã trả online</span>
+              <span className="text-2xl font-black text-stone-600 font-mono mt-0.5 block">{fmtMoney(prepaid)}</span>
             </div>
-
             <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-200">
-              <span className="text-[10px] uppercase font-bold text-amber-800 block">Hoa Hồng & Phí Ship Ca</span>
-              <span className="text-2xl font-black text-amber-800 font-mono mt-0.5 block">280.000₫</span>
-              <span className="text-[11px] text-stone-500 mt-1 block">14 đơn × 20.000₫</span>
+              <span className="text-[10px] uppercase font-bold text-stone-400 block">Đơn đã giao</span>
+              <span className="text-2xl font-black text-stone-900 font-mono mt-0.5 block">{rows.filter(r => r.o.status === 'COMPLETED').length}</span>
             </div>
-
             <div className="p-3.5 bg-primary text-white rounded-xl shadow-xs">
-              <span className="text-[10px] uppercase font-bold text-white/80 block">Phải nộp về két</span>
-              <span className="text-2xl font-black text-white font-mono mt-0.5 block">1.450.000₫</span>
+              <span className="text-[10px] uppercase font-bold text-white/80 block">Phải nộp về quán</span>
+              <span className="text-2xl font-black text-white font-mono mt-0.5 block">{fmtMoney(codCollected)}</span>
               <span className="text-[11px] text-amber-200 font-semibold mt-1 block">
-                {isZClosed ? '✓ Đã bàn giao nộp két' : 'Chờ nộp két đóng ca'}
+                {isClosed ? `✓ Đã nộp ${fmtMoney(schedule?.ending_cash_actual)}` : 'Chưa nộp'}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Dual Column: Table & Remittance */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
-          {/* Left: Table (8 cols) */}
-          <div className="lg:col-span-8 space-y-4">
-            <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-3">
-              <div className="flex justify-between items-center pb-2 border-b border-stone-100 flex-wrap gap-2 text-xs">
-                <div>
-                  <h3 className="font-bold text-sm text-stone-900">Danh Sách Đơn Hàng Đối Soát Trong Ca</h3>
-                  <span className="text-stone-500 text-[11px]">Tổng số 14 đơn đã giao (100% hoàn tất)</span>
-                </div>
-                <span className="px-2.5 py-1 rounded bg-emerald-100 text-emerald-800 font-bold text-[11px]">
-                  ✓ Số liệu khớp 100%
-                </span>
-              </div>
-
-              <div className="overflow-x-auto rounded-xl border border-stone-200 text-xs">
-                <table className="w-full text-left">
-                  <thead className="bg-stone-50 text-stone-500 uppercase text-[10px] font-bold border-b border-stone-200">
+          <div className="lg:col-span-8 bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-3">
+            <h3 className="font-bold text-sm text-stone-900">Đơn trong ca</h3>
+            <div className="overflow-x-auto rounded-xl border border-stone-200 text-xs">
+              <table className="w-full text-left">
+                <thead className="bg-stone-50 text-stone-500 uppercase text-[10px] font-bold border-b border-stone-200">
+                  <tr>
+                    <th className="py-2.5 px-3">Mã đơn</th>
+                    <th className="py-2.5 px-3">Người nhận</th>
+                    <th className="py-2.5 px-3">Địa chỉ</th>
+                    <th className="py-2.5 px-3">Thanh toán</th>
+                    <th className="py-2.5 px-3 text-right">Số tiền</th>
+                    <th className="py-2.5 px-3 text-center">Trạng thái TT</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-stone-100">
+                  {rows.length === 0 && (
                     <tr>
-                      <th className="py-2.5 px-3">Mã đơn</th>
-                      <th className="py-2.5 px-3">Khách hàng</th>
-                      <th className="py-2.5 px-3">Địa chỉ giao</th>
-                      <th className="py-2.5 px-3">Hình thức</th>
-                      <th className="py-2.5 px-3 text-right">Tiền COD</th>
-                      <th className="py-2.5 px-3 text-right">Phí tài xế</th>
-                      <th className="py-2.5 px-3 text-center">Thu tiền</th>
+                      <td colSpan={6} className="py-6 text-center text-stone-400">Không có đơn trong ngày của ca này.</td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-stone-100 font-mono">
-                    <tr className="hover:bg-stone-50">
-                      <td className="py-2.5 px-3 font-bold text-primary">#ORD-89240</td>
-                      <td className="py-2.5 px-3 font-sans font-semibold">Phạm Bảo Trâm</td>
-                      <td className="py-2.5 px-3 font-sans text-stone-500">120 Hoàng Hoa Thám</td>
-                      <td className="py-2.5 px-3 font-sans">
-                        <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 text-[10px]">Tiền mặt COD</span>
+                  )}
+                  {rows.map(({ o, pay }) => (
+                    <tr key={o.id} className="hover:bg-stone-50">
+                      <td className="py-2.5 px-3 font-bold text-primary font-mono">{o.order_code}</td>
+                      <td className="py-2.5 px-3 font-semibold">{o.recipient_name}</td>
+                      <td className="py-2.5 px-3 text-stone-500">{o.delivery_address}</td>
+                      <td className="py-2.5 px-3">{pay ? PAYMENT_METHOD_LABEL[pay.payment_method] : '—'}</td>
+                      <td className="py-2.5 px-3 text-right font-bold font-mono">{fmtMoney(pay?.amount)}</td>
+                      <td className="py-2.5 px-3 text-center text-[10px] font-bold">
+                        {pay ? PAYMENT_STATUS_LABEL[pay.status] : '—'}
+                        {pay?.paid_at && <span className="block text-stone-400 font-normal">{fmtDateTime(pay.paid_at)}</span>}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-bold text-stone-900">250.000₫</td>
-                      <td className="py-2.5 px-3 text-right text-stone-600">20.000₫</td>
-                      <td className="py-2.5 px-3 text-center text-emerald-700 font-sans font-bold text-[10px]">Đã thu</td>
                     </tr>
-                    <tr className="hover:bg-stone-50">
-                      <td className="py-2.5 px-3 font-bold text-primary">#ORD-89235</td>
-                      <td className="py-2.5 px-3 font-sans font-semibold">Lê Minh Trí</td>
-                      <td className="py-2.5 px-3 font-sans text-stone-500">28 Phố Tràng Tiền</td>
-                      <td className="py-2.5 px-3 font-sans">
-                        <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 text-[10px]">Tiền mặt COD</span>
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-bold text-stone-900">380.000₫</td>
-                      <td className="py-2.5 px-3 text-right text-stone-600">20.000₫</td>
-                      <td className="py-2.5 px-3 text-center text-emerald-700 font-sans font-bold text-[10px]">Đã thu</td>
-                    </tr>
-                    <tr className="hover:bg-stone-50">
-                      <td className="py-2.5 px-3 font-bold text-primary">#ORD-89231</td>
-                      <td className="py-2.5 px-3 font-sans font-semibold">Vũ Đức Minh</td>
-                      <td className="py-2.5 px-3 font-sans text-stone-500">88 Thảo Điền</td>
-                      <td className="py-2.5 px-3 font-sans">
-                        <span className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-900 text-[10px]">VietQR (Đã TT)</span>
-                      </td>
-                      <td className="py-2.5 px-3 text-right text-stone-400">0₫</td>
-                      <td className="py-2.5 px-3 text-right text-stone-600">25.000₫</td>
-                      <td className="py-2.5 px-3 text-center text-blue-700 font-sans text-[10px]">Đã chuyển</td>
-                    </tr>
-                    <tr className="hover:bg-stone-50">
-                      <td className="py-2.5 px-3 font-bold text-primary">#ORD-89228</td>
-                      <td className="py-2.5 px-3 font-sans font-semibold">Hoàng Kim Ngân</td>
-                      <td className="py-2.5 px-3 font-sans text-stone-500">Landmark 81</td>
-                      <td className="py-2.5 px-3 font-sans">
-                        <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 text-[10px]">Tiền mặt COD</span>
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-bold text-stone-900">410.000₫</td>
-                      <td className="py-2.5 px-3 text-right text-stone-600">20.000₫</td>
-                      <td className="py-2.5 px-3 text-center text-emerald-700 font-sans font-bold text-[10px]">Đã thu</td>
-                    </tr>
-                    <tr className="hover:bg-stone-50">
-                      <td className="py-2.5 px-3 font-bold text-primary">#ORD-89220</td>
-                      <td className="py-2.5 px-3 font-sans font-semibold">Nguyễn Tuấn</td>
-                      <td className="py-2.5 px-3 font-sans text-stone-500">45 Lê Duẩn</td>
-                      <td className="py-2.5 px-3 font-sans">
-                        <span className="px-1.5 py-0.5 rounded bg-amber-50 text-amber-900 text-[10px]">Tiền mặt COD</span>
-                      </td>
-                      <td className="py-2.5 px-3 text-right font-bold text-stone-900">410.000₫</td>
-                      <td className="py-2.5 px-3 text-right text-stone-600">20.000₫</td>
-                      <td className="py-2.5 px-3 text-center text-emerald-700 font-sans font-bold text-[10px]">Đã thu</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-
-            {/* Denomination Tally */}
-            <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-3">
-              <div className="flex justify-between items-center text-xs">
-                <h4 className="font-bold text-sm text-stone-900">Bảng Kê Mệnh Giá Tiền Mặt Bàn Giao</h4>
-                <span className="text-stone-400">Kiểm đếm nhanh trước thu ngân</span>
-              </div>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
-                <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex justify-between">
-                  <span className="font-semibold text-stone-800">500.000₫</span>
-                  <span className="font-bold text-primary">2 tờ</span>
-                </div>
-                <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex justify-between">
-                  <span className="font-semibold text-stone-800">200.000₫</span>
-                  <span className="font-bold text-primary">2 tờ</span>
-                </div>
-                <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 flex justify-between">
-                  <span className="font-semibold text-stone-800">50.000₫</span>
-                  <span className="font-bold text-primary">1 tờ</span>
-                </div>
-                <div className="p-3 bg-primary/10 rounded-xl border border-primary/20 flex justify-between font-sans">
-                  <span className="font-bold text-stone-900">Tổng cộng</span>
-                  <span className="font-bold text-primary font-mono">1.450.000₫</span>
-                </div>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
 
-          {/* Right: Handover Execution Panel (4 cols) */}
-          <div className="lg:col-span-4 space-y-4 text-xs">
-            <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-stone-100">
-                <div className="w-8 h-8 rounded-lg bg-primary text-white flex items-center justify-center font-bold">
-                  <span className="material-symbols-outlined text-[18px]">assignment_turned_in</span>
+          <div className="lg:col-span-4 bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-4 text-xs">
+            <h3 className="font-bold text-sm text-stone-900 pb-2 border-b border-stone-100">Kiểm đếm & nộp tiền</h3>
+            <div className="space-y-1.5 font-mono">
+              {DENOMS.map(d => (
+                <div key={d} className="flex items-center justify-between p-2 rounded-xl bg-stone-50 border border-stone-200/60">
+                  <span className="font-bold text-stone-900">{fmtMoney(d)}</span>
+                  <input
+                    type="number"
+                    min={0}
+                    value={denoms[d] ?? 0}
+                    onChange={e => setDenoms({ ...denoms, [d]: Math.max(0, parseInt(e.target.value, 10) || 0) })}
+                    className="w-16 h-8 text-center rounded-lg bg-white border border-stone-300 font-bold"
+                  />
                 </div>
-                <div>
-                  <h3 className="font-bold text-sm text-stone-900">Xác Nhận Nộp Tiền</h3>
-                  <span className="text-[10px] text-stone-400">Bàn giao quỹ ca COD cho thu ngân</span>
-                </div>
-              </div>
-
-              {/* Method tabs */}
-              <div className="grid grid-cols-2 gap-1.5 p-1 bg-stone-100 rounded-xl">
-                <button
-                  type="button"
-                  onClick={() => setRemitMethod('cash')}
-                  className={`py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-1 ${
-                    remitMethod === 'cash' ? 'bg-white text-primary shadow-2xs' : 'text-stone-600'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[16px]">payments</span>
-                  <span>Tiền mặt POS</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRemitMethod('qr')}
-                  className={`py-2 rounded-lg font-bold transition-all flex items-center justify-center gap-1 ${
-                    remitMethod === 'qr' ? 'bg-white text-primary shadow-2xs' : 'text-stone-600'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[16px]">qr_code_2</span>
-                  <span>QR Quỹ Cty</span>
-                </button>
-              </div>
-
-              {remitMethod === 'cash' ? (
-                <div className="space-y-3">
-                  <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 space-y-1">
-                    <span className="text-[10px] uppercase font-bold text-stone-400 block">Thu ngân tiếp nhận:</span>
-                    <strong className="text-sm font-bold text-stone-900 block">Trần Mai Ly</strong>
-                    <span className="text-[11px] text-stone-500 font-mono block">Mã: NV-8821 • Quầy POS 02 Tràng Tiền</span>
-                  </div>
-
-                  <div className="p-3 bg-stone-100 rounded-xl flex justify-between items-center font-mono">
-                    <span className="font-sans font-bold text-stone-700">Tiền mặt bàn giao:</span>
-                    <span className="text-lg font-black text-primary">1.450.000₫</span>
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-stone-700 mb-1">Mã PIN Shipper (Đỗ Văn Hùng)</label>
-                    <input
-                      type="password"
-                      maxLength={4}
-                      value={driverPin}
-                      onChange={e => setDriverPin(e.target.value)}
-                      className="w-full h-10 px-3 rounded-xl border border-stone-300 font-mono text-center font-bold tracking-widest"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block font-semibold text-stone-700 mb-1">Quẹt thẻ / NFC Thu ngân xác nhận</label>
-                    <input
-                      type="text"
-                      readOnly
-                      value="RFID-8821-VERIFIED"
-                      className="w-full h-10 px-3 rounded-xl bg-stone-100 border border-stone-200 font-mono text-xs text-emerald-700 font-bold"
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="p-4 bg-stone-50 rounded-xl border border-stone-200 text-center space-y-2">
-                  <span className="text-[11px] font-semibold text-stone-600">Quét mã nộp tiền vào TK Quỹ Aura Café</span>
-                  <div className="w-32 h-32 mx-auto bg-white p-2 rounded-xl flex items-center justify-center border border-stone-200 shadow-2xs">
-                    <span className="material-symbols-outlined text-[80px] text-stone-800">qr_code_2</span>
-                  </div>
-                  <div className="text-[11px] font-mono font-bold text-primary">DX902 COD 2410</div>
-                  <div className="text-sm font-black font-mono text-stone-900">1.450.000₫</div>
-                </div>
-              )}
-
-              <div className="space-y-2 pt-2">
-                <button
-                  type="button"
-                  onClick={handleCloseZDelivery}
-                  className="w-full py-3 rounded-xl bg-primary hover:bg-primary-container text-white font-bold text-xs sm:text-sm shadow-md transition-all flex items-center justify-center gap-1.5"
-                >
-                  <span className="material-symbols-outlined text-[18px]">check_circle</span>
-                  <span>CHỐT BÀN GIAO TIỀN CA (Z-DELIVERY)</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => onShowToast?.('Đang in biên lai bàn giao tiền COD 2 liên...')}
-                  className="w-full py-2.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold border border-stone-200 flex items-center justify-center gap-1"
-                >
-                  <span className="material-symbols-outlined text-[16px]">print</span>
-                  <span>In biên lai nộp tiền 2 liên</span>
-                </button>
-              </div>
+              ))}
             </div>
+            <div className="p-3 bg-stone-100 rounded-xl flex justify-between items-center font-mono">
+              <span className="font-sans font-bold text-stone-700">Tiền thực nộp:</span>
+              <span className="text-lg font-black text-primary">{fmtMoney(counted)}</span>
+            </div>
+            {counted !== codCollected && (
+              <p className="text-rose-700 font-semibold">Chênh lệch {fmtMoney(counted - codCollected)} so với tiền COD đã thu.</p>
+            )}
+            <textarea
+              rows={2}
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              placeholder="Ghi chú nộp tiền..."
+              className="w-full p-2.5 rounded-xl bg-stone-50 border border-stone-200 focus:outline-none focus:border-primary resize-none"
+            />
+            <button
+              type="button"
+              onClick={handleRemit}
+              disabled={isClosed}
+              className="w-full py-3 rounded-xl bg-primary hover:bg-primary-container text-white font-bold text-xs sm:text-sm shadow-md flex items-center justify-center gap-1.5 disabled:opacity-50"
+            >
+              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+              {isClosed ? 'Ca đã chốt' : 'NỘP TIỀN & CHỐT CA GIAO HÀNG'}
+            </button>
           </div>
         </div>
       </main>

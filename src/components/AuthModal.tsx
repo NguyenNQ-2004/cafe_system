@@ -1,4 +1,6 @@
   import React, { useState } from 'react';
+  import { useDb } from '../data/DbContext';
+  import { nowSql } from '../data/dbUtils';
 
   interface AuthModalProps {
     isOpen: boolean;
@@ -11,13 +13,14 @@
     onClose,
     onLoginSuccess
   }) => {
+    const { db, session, setSession, transact } = useDb();
     const [activeTab, setActiveTab] = useState<'login' | 'register' | 'forgot' | 'change'>('login');
     const [showPassword, setShowPassword] = useState(false);
     const [showRegPassword, setShowRegPassword] = useState(false);
     const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-    // Form states
-    const [loginIdentifier, setLoginIdentifier] = useState('barista.nguyen@auracafe.vn');
+    // Form states (đăng nhập bằng users.phone hoặc users.email)
+    const [loginIdentifier, setLoginIdentifier] = useState('0900000004');
     const [loginPassword, setLoginPassword] = useState('password123');
     const [regName, setRegName] = useState('');
     const [regPhone, setRegPhone] = useState('');
@@ -37,22 +40,58 @@
 
     const handleLoginSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      triggerToast('Đăng nhập thành công vào Hệ thống Vận hành Aura!');
+      const id = loginIdentifier.trim().toLowerCase();
+      const user = db.users.find(u => u.phone === id || (u.email ?? '').toLowerCase() === id);
+      if (!user) {
+        triggerToast('Không tìm thấy tài khoản với số điện thoại / email này.');
+        return;
+      }
+      if (user.status !== 'ACTIVE') {
+        triggerToast('Tài khoản đang bị khóa hoặc ngừng hoạt động.');
+        return;
+      }
+      // Gán người dùng vào phiên làm việc tương ứng với vai trò
+      if (user.role === 'CUSTOMER') setSession({ customerId: user.id });
+      else if (user.position === 'CASHIER') setSession({ cashierId: user.id });
+      else if (user.position === 'BARISTA') setSession({ baristaId: user.id });
+      else if (user.position === 'SHIPPER') setSession({ shipperId: user.id });
+      else setSession({ adminId: user.id });
+      triggerToast('Đăng nhập thành công!');
       setTimeout(() => {
-        if (onLoginSuccess) {
-          onLoginSuccess('Nguyễn Văn An');
-        }
+        onLoginSuccess?.(user.full_name);
         onClose();
       }, 700);
     };
 
     const handleRegisterSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      triggerToast('Tạo tài khoản thành công! Đã chuyển tiếp vào hệ thống.');
+      const phone = regPhone.trim();
+      if (db.users.some(u => u.phone === phone)) {
+        triggerToast('Số điện thoại đã được đăng ký (users.phone là duy nhất).');
+        return;
+      }
+      // Tạo bản ghi users với role CUSTOMER; mật khẩu sẽ được backend băm vào password_hash
+      const created = transact(tx =>
+        tx.insert('users', {
+          full_name: regName.trim(),
+          phone,
+          email: regEmail.trim() || null,
+          password_hash: 'pending_hash',
+          birthday: null,
+          address: null,
+          role: 'CUSTOMER',
+          status: 'ACTIVE',
+          position: null,
+          base_salary: 0,
+          hire_date: null,
+          total_points: 0,
+          created_at: nowSql()
+        })
+      );
+      setSession({ customerId: created.id });
+      triggerToast('Tạo tài khoản thành công!');
       setTimeout(() => {
-        if (onLoginSuccess) {
-          onLoginSuccess(regName || 'Nguyễn Văn An');
-        }
+        onLoginSuccess?.(created.full_name);
         onClose();
       }, 800);
     };
@@ -71,6 +110,7 @@
         triggerToast('Mật khẩu xác nhận không khớp! Vui lòng thử lại.');
         return;
       }
+      transact(tx => tx.update('users', session.customerId, { password_hash: `changed_${Date.now()}` }));
       triggerToast('Đổi mật khẩu tài khoản thành công!');
       setTimeout(() => {
         setActiveTab('login');
@@ -311,7 +351,7 @@
                     onClick={() => {
                       triggerToast('Đã liên kết phiên xác thực Google Workspace!');
                       setTimeout(() => {
-                        if (onLoginSuccess) onLoginSuccess('Nguyễn Văn An');
+                        if (onLoginSuccess) onLoginSuccess(db.users.find(u => u.id === session.customerId)?.full_name ?? 'bạn');
                         onClose();
                       }, 600);
                     }}

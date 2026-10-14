@@ -4,8 +4,9 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { PageRoute, CartItem, PastOrder, Product } from './types';
-import { INITIAL_CART_ITEMS, INITIAL_PAST_ORDERS, PRODUCTS } from './data/mockData';
+import { PageRoute, CartItem, CheckoutDraft, Product } from './types';
+import { useDb } from './data/DbContext';
+import { calcUnitPrice, defaultSize, orderItemsOf, userName } from './data/dbUtils';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { AuthModal } from './components/AuthModal';
@@ -54,14 +55,19 @@ import { AdminUsersPage } from './pages/admin/AdminUsersPage';
 import { AdminCustomersPage } from './pages/admin/AdminCustomersPage';
 import { AdminMembershipsPage } from './pages/admin/AdminMembershipsPage';
 import { AdminComplaintsPage } from './pages/admin/AdminComplaintsPage';
+import { AdminOrdersPage } from './pages/admin/AdminOrdersPage';
+import { AdminSettingsPage } from './pages/admin/AdminSettingsPage';
 
 export default function App() {
+  const { db } = useDb();
   const [currentRoute, setCurrentRoute] = useState<PageRoute>('home');
-  const [selectedProductId, setSelectedProductId] = useState<string>('ca-phe-muoi');
-  const [cartItems, setCartItems] = useState<CartItem[]>(INITIAL_CART_ITEMS);
-  const [availablePoints, setAvailablePoints] = useState<number>(25000);
+  const [selectedProductId, setSelectedProductId] = useState<number>(1);
+  const [selectedBillOrderId, setSelectedBillOrderId] = useState<number | null>(null);
+  const [cartItems, setCartItems] = useState<CartItem[]>([
+    { cartId: 'cart-1', product_id: 1, quantity: 1, unit_price: 45000, customization: { size: 'M', sugar: '50%' }, checked: true }
+  ]);
   const [pointsToRedeem, setPointsToRedeem] = useState<number>(0);
-  const [pastOrders, setPastOrders] = useState<PastOrder[]>(INITIAL_PAST_ORDERS);
+  const [checkoutDraft, setCheckoutDraft] = useState<CheckoutDraft | null>(null);
 
   // Modals & Overlays
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -91,58 +97,51 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSelectProduct = (productId: string) => {
+  const handleSelectProduct = (productId: number) => {
     setSelectedProductId(productId);
     handleNavigate('customize');
   };
 
-  const handleQuickAdd = (product: Product) => {
-    const existingIndex = cartItems.findIndex(
-      item => item.productId === product.id && item.size === 'M'
-    );
+  const handleOpenBill = (orderId: number) => {
+    setSelectedBillOrderId(orderId);
+    handleNavigate('bill');
+  };
 
-    if (existingIndex > -1) {
-      const updated = [...cartItems];
-      updated[existingIndex].quantity += 1;
-      setCartItems(updated);
+  const handleQuickAdd = (product: Product) => {
+    const size = defaultSize(product);
+    const existing = cartItems.find(
+      i => i.product_id === product.id && i.customization.size === size && !(i.customization.topping ?? []).length
+    );
+    if (existing) {
+      setCartItems(prev => prev.map(i => (i.cartId === existing.cartId ? { ...i, quantity: i.quantity + 1 } : i)));
     } else {
-      const newItem: CartItem = {
-        cartId: `cart-${Date.now()}`,
-        productId: product.id,
-        name: product.name,
-        categoryTitle: product.categoryLabel,
-        image: product.image,
-        size: 'M',
-        sugar: '100% Tiêu chuẩn',
-        ice: 'Đá Chuẩn',
-        toppings: [],
-        note: '',
-        unitPrice: product.price,
-        quantity: 1,
-        checked: true
-      };
-      setCartItems([newItem, ...cartItems]);
+      setCartItems(prev => [
+        {
+          cartId: `cart-${Date.now()}`,
+          product_id: product.id,
+          quantity: 1,
+          unit_price: calcUnitPrice(product, size),
+          customization: size ? { size } : {},
+          checked: true
+        },
+        ...prev
+      ]);
     }
     showToast(`Đã thêm "${product.name}" vào giỏ hàng!`);
   };
 
-  const handleAddToCart = (item: CartItem) => {
-    setCartItems([item, ...cartItems]);
-    showToast(`Đã thêm "${item.name}" vào giỏ hàng!`);
-    handleNavigate('cart');
+  const handleAddToCart = (item: CartItem, goToCart = true) => {
+    setCartItems(prev => [item, ...prev]);
+    const name = db.products.find(p => p.id === item.product_id)?.name ?? 'món';
+    showToast(`Đã thêm "${name}" vào giỏ hàng!`);
+    if (goToCart) handleNavigate('cart');
   };
 
   const handleUpdateQuantity = (cartId: string, delta: number) => {
     setCartItems(prev =>
       prev
-        .map(item => {
-          if (item.cartId === cartId) {
-            const nextQty = item.quantity + delta;
-            return nextQty > 0 ? { ...item, quantity: nextQty } : null;
-          }
-          return item;
-        })
-        .filter(Boolean) as CartItem[]
+        .map(item => (item.cartId === cartId ? { ...item, quantity: item.quantity + delta } : item))
+        .filter(item => item.quantity > 0)
     );
   };
 
@@ -152,36 +151,38 @@ export default function App() {
   };
 
   const handleToggleCheck = (cartId: string) => {
-    setCartItems(prev =>
-      prev.map(item =>
-        item.cartId === cartId ? { ...item, checked: !item.checked } : item
-      )
-    );
+    setCartItems(prev => prev.map(item => (item.cartId === cartId ? { ...item, checked: !item.checked } : item)));
   };
 
-  const handleReorder = (order: PastOrder) => {
-    showToast(`Đang đặt lại các món từ đơn ${order.id}...`);
+  // Đặt lại: chép các dòng order_items của đơn cũ vào giỏ (giá lấy theo base_price hiện tại)
+  const handleReorder = (orderId: number) => {
+    const items = orderItemsOf(db, orderId);
+    const now = Date.now();
+    const next: CartItem[] = items
+      .map((it, idx) => {
+        const product = db.products.find(p => p.id === it.product_id);
+        if (!product || !product.is_available) return null;
+        const c = it.customization ?? {};
+        return {
+          cartId: `cart-${now}-${idx}`,
+          product_id: product.id,
+          quantity: it.quantity,
+          unit_price: calcUnitPrice(product, c.size, c.topping),
+          customization: c,
+          checked: true
+        };
+      })
+      .filter(Boolean) as CartItem[];
+    setCartItems(prev => [...next, ...prev]);
+    showToast(`Đã thêm ${next.length} món từ đơn cũ vào giỏ hàng.`);
     handleNavigate('cart');
   };
 
-  const handlePaymentComplete = () => {
-    const newOrder: PastOrder = {
-      id: `#AUR-${Math.floor(10000 + Math.random() * 90000)}`,
-      date: 'Hôm nay',
-      time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
-      status: 'processing',
-      statusLabel: 'Barista đang pha chế',
-      total: 179000,
-      itemsSummary: cartItems.map(i => `${i.quantity}x ${i.name}`).join(', ') || '3x Món đặc sản Aura',
-      address: '28 Phố Tràng Tiền, Hoàn Kiếm, Hà Nội',
-      paymentMethod: 'VietQR Chuyển khoản',
-      pointsEarned: 179,
-      image: cartItems[0]?.image || PRODUCTS[0].image
-    };
-
-    setPastOrders([newOrder, ...pastOrders]);
-    setCartItems([]);
-    showToast('Thanh toán thành công! Barista đang bắt đầu pha chế đơn hàng.');
+  const handlePaymentComplete = (orderCode: string) => {
+    setCartItems(prev => prev.filter(i => i.checked === false));
+    setPointsToRedeem(0);
+    setCheckoutDraft(null);
+    showToast(`Đặt đơn ${orderCode} thành công! Đơn đã chuyển tới quầy pha chế.`);
     handleNavigate('orders');
   };
 
@@ -195,7 +196,7 @@ export default function App() {
     'home', 'menu', 'customize', 'cart', 'checkout', 'payment', 'bill', 'orders', 'profile', 'feedback'
   ].includes(currentRoute);
 
-  // Available application screens organized strictly by Screen 1 -> Screen 31
+  // Available application screens
   const allScreens: {
     route: PageRoute | 'auth-modal';
     label: string;
@@ -234,6 +235,8 @@ export default function App() {
     { route: 'admin-memberships', label: 'Phone Loyalty Management Screen', tag: 'Screen 29', icon: 'loyalty', role: 'admin' },
     { route: 'admin-complaints', label: 'Feedback & Complaint Management Screen', tag: 'Screen 30', icon: 'feedback', role: 'admin' },
     { route: 'admin-overview', label: 'Reports Dashboard', tag: 'Screen 31', icon: 'dashboard', role: 'admin' },
+    { route: 'admin-orders', label: 'Order Management (Admin)', tag: 'Screen 32', icon: 'list_alt', role: 'admin' },
+    { route: 'admin-settings', label: 'Shop Settings', tag: 'Screen 33', icon: 'settings', role: 'admin' },
   ];
 
   const filteredScreens = allScreens.filter(
@@ -241,6 +244,11 @@ export default function App() {
   );
 
   const totalCartCount = cartItems.reduce((acc, curr) => acc + curr.quantity, 0);
+
+  // Đơn đang giao của khách để mở chat với shipper
+  const deliveringOrder = db.orders.find(o => o.customer_id !== null && o.status === 'DELIVERING');
+
+  const adminPageProps = { onNavigate: handleNavigate, onShowToast: showToast };
 
   return (
     <div className="min-h-screen bg-stone-50 flex flex-col font-sans text-stone-900 antialiased selection:bg-primary/20 selection:text-primary">
@@ -285,8 +293,7 @@ export default function App() {
             onRemoveItem={handleRemoveCartItem}
             onToggleItemCheck={handleToggleCheck}
             onToggleAllCheck={(checked) => setCartItems(prev => prev.map(i => ({ ...i, checked })))}
-            onAddUpsellItem={(item) => setCartItems(prev => [item, ...prev])}
-            availablePoints={availablePoints}
+            onAddUpsellItem={(item) => handleAddToCart(item, false)}
             pointsToRedeem={pointsToRedeem}
             onRedeemPoints={setPointsToRedeem}
             onNavigate={handleNavigate}
@@ -297,16 +304,24 @@ export default function App() {
             cartItems={cartItems.filter(i => i.checked !== false)}
             pointsToRedeem={pointsToRedeem}
             onNavigate={handleNavigate}
+            onConfirm={(draft) => {
+              setCheckoutDraft(draft);
+              handleNavigate('payment');
+            }}
           />
         )}
         {currentRoute === 'payment' && (
           <PaymentPage
+            cartItems={cartItems.filter(i => i.checked !== false)}
+            draft={checkoutDraft}
             onNavigate={handleNavigate}
             onPaymentComplete={handlePaymentComplete}
           />
         )}
         {currentRoute === 'bill' && (
           <BillPage
+            orderId={selectedBillOrderId}
+            onSelectOrder={setSelectedBillOrderId}
             onNavigate={handleNavigate}
             onShowToast={showToast}
           />
@@ -315,8 +330,8 @@ export default function App() {
           <OrdersPage
             onNavigate={handleNavigate}
             onReorder={handleReorder}
-            onOpenFeedbackForOrder={(_orderId) => handleNavigate('feedback')}
-            onOpenDriverChat={(_driverName, _orderId) => setIsChatOpen(true)}
+            onOpenBill={handleOpenBill}
+            onShowToast={showToast}
           />
         )}
         {currentRoute === 'profile' && (
@@ -334,156 +349,38 @@ export default function App() {
         )}
 
         {/* POS Thu ngân Pages */}
-        {currentRoute === 'pos-create' && (
-          <PosCreateOrderPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'pos-orders' && (
-          <PosOrdersPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'pos-shift' && (
-          <PosShiftPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'pos-handover' && (
-          <PosHandoverPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
+        {currentRoute === 'pos-create' && <PosCreateOrderPage {...adminPageProps} />}
+        {currentRoute === 'pos-orders' && <PosOrdersPage {...adminPageProps} onOpenBill={handleOpenBill} />}
+        {currentRoute === 'pos-shift' && <PosShiftPage {...adminPageProps} />}
+        {currentRoute === 'pos-handover' && <PosHandoverPage {...adminPageProps} />}
 
         {/* Barista KDS Pages */}
-        {currentRoute === 'kds-terminal' && (
-          <KdsTerminalPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
+        {currentRoute === 'kds-terminal' && <KdsTerminalPage {...adminPageProps} />}
 
         {/* Delivery Pages */}
-        {currentRoute === 'delivery-orders' && (
-          <DeliveryOrdersPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'delivery-report' && (
-          <DeliveryProblemPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'delivery-cod' && (
-          <DeliveryCodPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
+        {currentRoute === 'delivery-orders' && <DeliveryOrdersPage {...adminPageProps} />}
+        {currentRoute === 'delivery-report' && <DeliveryProblemPage {...adminPageProps} />}
+        {currentRoute === 'delivery-cod' && <DeliveryCodPage {...adminPageProps} />}
 
         {/* Admin ERP Pages */}
-        {currentRoute === 'admin-overview' && (
-          <AdminDashboardPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-categories' && (
-          <AdminCategoriesPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-products' && (
-          <AdminProductsPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-recipes' && (
-          <AdminRecipesPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-stock' && (
-          <AdminStockPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-restock' && (
-          <AdminRestockPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-ingredients' && (
-          <AdminIngredientsPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-suppliers' && (
-          <AdminSuppliersPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-purchases' && (
-          <AdminPurchasesPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-attendance' && (
-          <AdminAttendancePage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-users' && (
-          <AdminUsersPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-shifts' && (
-          <AdminShiftsPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-schedules' && (
-          <AdminSchedulesPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-customers' && (
-          <AdminCustomersPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-memberships' && (
-          <AdminMembershipsPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
-        {currentRoute === 'admin-complaints' && (
-          <AdminComplaintsPage
-            onNavigate={handleNavigate}
-            onShowToast={showToast}
-          />
-        )}
+        {currentRoute === 'admin-overview' && <AdminDashboardPage {...adminPageProps} />}
+        {currentRoute === 'admin-categories' && <AdminCategoriesPage {...adminPageProps} />}
+        {currentRoute === 'admin-products' && <AdminProductsPage {...adminPageProps} />}
+        {currentRoute === 'admin-recipes' && <AdminRecipesPage {...adminPageProps} />}
+        {currentRoute === 'admin-stock' && <AdminStockPage {...adminPageProps} />}
+        {currentRoute === 'admin-restock' && <AdminRestockPage {...adminPageProps} />}
+        {currentRoute === 'admin-ingredients' && <AdminIngredientsPage {...adminPageProps} />}
+        {currentRoute === 'admin-suppliers' && <AdminSuppliersPage {...adminPageProps} />}
+        {currentRoute === 'admin-purchases' && <AdminPurchasesPage {...adminPageProps} />}
+        {currentRoute === 'admin-attendance' && <AdminAttendancePage {...adminPageProps} />}
+        {currentRoute === 'admin-users' && <AdminUsersPage {...adminPageProps} />}
+        {currentRoute === 'admin-shifts' && <AdminShiftsPage {...adminPageProps} />}
+        {currentRoute === 'admin-schedules' && <AdminSchedulesPage {...adminPageProps} />}
+        {currentRoute === 'admin-customers' && <AdminCustomersPage {...adminPageProps} />}
+        {currentRoute === 'admin-memberships' && <AdminMembershipsPage {...adminPageProps} />}
+        {currentRoute === 'admin-complaints' && <AdminComplaintsPage {...adminPageProps} />}
+        {currentRoute === 'admin-orders' && <AdminOrdersPage {...adminPageProps} onOpenBill={handleOpenBill} />}
+        {currentRoute === 'admin-settings' && <AdminSettingsPage {...adminPageProps} />}
       </main>
 
       {/* Consumer Footer only shown on customer routes */}
@@ -493,8 +390,8 @@ export default function App() {
       <AuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
-        onLoginSuccess={(userName) => {
-          showToast(`Xin chào mừng ${userName} quay trở lại Aura Café!`);
+        onLoginSuccess={(name) => {
+          showToast(`Xin chào ${name}, chào mừng quay trở lại Aura Café!`);
         }}
       />
 
@@ -502,8 +399,8 @@ export default function App() {
       <ChatModal
         isOpen={isChatOpen}
         onClose={() => setIsChatOpen(false)}
-        driverName="Trần Hoàng Long (Tài xế giao vận Aura)"
-        orderId="#AUR-89241"
+        driverName={deliveringOrder ? userName(db, deliveringOrder.shipper_id, 'Shipper Aura') : 'Shipper Aura'}
+        orderId={deliveringOrder ? deliveringOrder.order_code : ''}
       />
 
       {/* Floating System Switcher for the available screens across all roles */}
@@ -535,7 +432,7 @@ export default function App() {
               ].map(f => (
                 <button
                   key={f.id}
-                  onClick={() => setNavRoleFilter(f.id as any)}
+                  onClick={() => setNavRoleFilter(f.id as typeof navRoleFilter)}
                   className={`px-2.5 py-1 rounded-lg whitespace-nowrap transition-colors ${navRoleFilter === f.id
                     ? 'bg-primary text-white shadow-2xs'
                     : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -588,7 +485,7 @@ export default function App() {
         <button
           onClick={() => setIsScreenNavOpen(!isScreenNavOpen)}
           className="h-12 px-4 rounded-full bg-stone-900 text-white shadow-xl hover:bg-stone-800 active:scale-95 transition-all flex items-center gap-2.5 border border-stone-700 group"
-          title="Switch subsystems and view all 31 screens"
+          title={`Switch subsystems and view all ${allScreens.length} screens`}
         >
           <span className="material-symbols-outlined text-amber-400 group-hover:rotate-45 transition-transform text-[20px]">
             grid_view

@@ -10,24 +10,17 @@ interface ChatModalProps {
 export const ChatModal: React.FC<ChatModalProps> = ({
   isOpen,
   onClose,
-  driverName = 'Lê Minh Trí',
-  orderId = '#AUR-89241'
+  driverName = 'Shipper Aura',
+  orderId = ''
 }) => {
+  // Tin nhắn chat chỉ tồn tại trên giao diện (database không có bảng lưu chat)
   const [messages, setMessages] = useState<Array<{ sender: 'user' | 'driver'; text: string; time: string }>>([
     {
       sender: 'driver',
-      text: 'Chào anh An! Em nhận đơn #AUR-89241 từ Tràng Tiền rồi ạ. Em đang đợi bar đóng nắp chống tràn rồi sẽ chạy ngay!',
-      time: '09:49'
-    },
-    {
-      sender: 'user',
-      text: 'Chào bạn, nhớ lấy giúp mình ống hút cỏ và túi giữ nhiệt nhé!',
-      time: '09:51'
-    },
-    {
-      sender: 'driver',
-      text: 'Dạ vâng anh yên tâm, cửa hàng đã cho vào túi zip nhôm giữ nhiệt và kèm đủ ống hút ạ.',
-      time: '09:52'
+      text: orderId
+        ? `Chào bạn! Mình đang giao đơn ${orderId}, có gì cần dặn thêm cứ nhắn mình nhé.`
+        : 'Chào bạn! Bạn cần hỗ trợ gì về đơn hàng?',
+      time: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
     }
   ]);
   const [inputVal, setInputVal] = useState('');

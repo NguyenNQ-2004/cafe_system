@@ -1,278 +1,205 @@
 import React, { useState } from 'react';
-import { PageRoute } from '../../types';
-import { AdminSidebar } from './AdminSidebar';
+import { PageRoute, ShiftName, StaffPosition, WorkSchedule } from '../../types';
+import { useDb } from '../../data/DbContext';
+import { POSITION_LABEL, SCHEDULE_STATUS_LABEL, SHIFT_LABEL, fmtDate, shiftTimeRange, userName } from '../../data/dbUtils';
+import { AdminLayout, Field, FormActions, GhostButton, Modal, PrimaryButton, inputCls } from './AdminUi';
 
 interface AdminSchedulesPageProps {
   onNavigate: (route: PageRoute) => void;
   onShowToast?: (msg: string) => void;
 }
 
-interface ScheduleEntry {
-  id: string;
-  employeeName: string;
-  role: 'CASHIER' | 'BARISTA' | 'SHIPPER' | 'MANAGER';
-  shift: 'MORNING' | 'AFTERNOON' | 'EVENING';
-  day: 'Thứ 2' | 'Thứ 3' | 'Thứ 4' | 'Thứ 5' | 'Thứ 6' | 'Thứ 7' | 'Chủ Nhật';
-  status: 'CONFIRMED' | 'PENDING';
-}
+const SHIFTS: ShiftName[] = ['MORNING', 'AFTERNOON', 'EVENING'];
+const DAY_LABELS = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ nhật'];
+const POSITION_STYLE: Record<StaffPosition, string> = {
+  CASHIER: 'bg-amber-100 text-amber-800 border-amber-200',
+  BARISTA: 'bg-blue-100 text-blue-800 border-blue-200',
+  SHIPPER: 'bg-emerald-100 text-emerald-800 border-emerald-200',
+  MANAGER: 'bg-purple-100 text-purple-800 border-purple-200'
+};
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const toSqlDate = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const mondayOf = (dateStr: string) => {
+  const d = new Date(`${dateStr}T00:00:00`);
+  const diff = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - diff);
+  return d;
+};
+const addDays = (d: Date, n: number) => {
+  const x = new Date(d);
+  x.setDate(x.getDate() + n);
+  return x;
+};
 
 export const AdminSchedulesPage: React.FC<AdminSchedulesPageProps> = ({ onNavigate, onShowToast }) => {
-  const [week, setWeek] = useState('Tuần 43 (20/10 - 26/10/2026)');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { db, transact } = useDb();
+  const latest = db.work_schedules.map(s => s.work_date).sort().pop() ?? toSqlDate(new Date());
+  const [weekStart, setWeekStart] = useState<Date>(mondayOf(latest));
+  const [form, setForm] = useState<{ user_id: number; work_date: string; shift_name: ShiftName; note: string } | null>(null);
 
-  const [schedules, setSchedules] = useState<ScheduleEntry[]>([
-    { id: 's1', employeeName: 'Trần Mai Ly', role: 'CASHIER', shift: 'MORNING', day: 'Thứ 2', status: 'CONFIRMED' },
-    { id: 's2', employeeName: 'Nguyễn Văn An', role: 'BARISTA', shift: 'MORNING', day: 'Thứ 2', status: 'CONFIRMED' },
-    { id: 's3', employeeName: 'Đỗ Văn Hùng', role: 'SHIPPER', shift: 'MORNING', day: 'Thứ 2', status: 'CONFIRMED' },
-    { id: 's4', employeeName: 'Lê Thu Trang', role: 'CASHIER', shift: 'AFTERNOON', day: 'Thứ 2', status: 'CONFIRMED' },
-    { id: 's5', employeeName: 'Phạm Quang Huy', role: 'BARISTA', shift: 'AFTERNOON', day: 'Thứ 2', status: 'CONFIRMED' },
+  const staff = db.users.filter(u => u.role !== 'CUSTOMER' && u.status === 'ACTIVE');
+  const days = Array.from({ length: 7 }, (_, i) => toSqlDate(addDays(weekStart, i)));
 
-    { id: 's6', employeeName: 'Trần Mai Ly', role: 'CASHIER', shift: 'MORNING', day: 'Thứ 3', status: 'CONFIRMED' },
-    { id: 's7', employeeName: 'Nguyễn Văn An', role: 'BARISTA', shift: 'MORNING', day: 'Thứ 3', status: 'CONFIRMED' },
-    { id: 's8', employeeName: 'Hoàng Văn Nam', role: 'SHIPPER', shift: 'AFTERNOON', day: 'Thứ 3', status: 'CONFIRMED' },
+  const openCreate = (work_date = days[0], shift_name: ShiftName = 'MORNING') =>
+    setForm({ user_id: staff[0]?.id ?? 0, work_date, shift_name, note: '' });
 
-    { id: 's9', employeeName: 'Trần Mai Ly', role: 'CASHIER', shift: 'MORNING', day: 'Thứ 4', status: 'CONFIRMED' },
-    { id: 's10', employeeName: 'Nguyễn Văn An', role: 'BARISTA', shift: 'MORNING', day: 'Thứ 4', status: 'CONFIRMED' },
-    { id: 's11', employeeName: 'Lê Thu Trang', role: 'CASHIER', shift: 'AFTERNOON', day: 'Thứ 4', status: 'CONFIRMED' },
-
-    { id: 's12', employeeName: 'Nguyễn Văn An', role: 'BARISTA', shift: 'MORNING', day: 'Thứ 5', status: 'CONFIRMED' },
-    { id: 's13', employeeName: 'Trần Mai Ly', role: 'CASHIER', shift: 'MORNING', day: 'Thứ 5', status: 'CONFIRMED' },
-    { id: 's14', employeeName: 'Đỗ Văn Hùng', role: 'SHIPPER', shift: 'MORNING', day: 'Thứ 5', status: 'CONFIRMED' },
-
-    { id: 's15', employeeName: 'Trần Mai Ly', role: 'CASHIER', shift: 'MORNING', day: 'Thứ 6', status: 'CONFIRMED' },
-    { id: 's16', employeeName: 'Nguyễn Văn An', role: 'BARISTA', shift: 'MORNING', day: 'Thứ 6', status: 'CONFIRMED' },
-    { id: 's17', employeeName: 'Hoàng Kim', role: 'MANAGER', shift: 'EVENING', day: 'Thứ 6', status: 'CONFIRMED' },
-
-    { id: 's18', employeeName: 'Lê Thu Trang', role: 'CASHIER', shift: 'MORNING', day: 'Thứ 7', status: 'CONFIRMED' },
-    { id: 's19', employeeName: 'Phạm Quang Huy', role: 'BARISTA', shift: 'MORNING', day: 'Thứ 7', status: 'CONFIRMED' },
-    { id: 's20', employeeName: 'Đỗ Văn Hùng', role: 'SHIPPER', shift: 'MORNING', day: 'Thứ 7', status: 'CONFIRMED' },
-
-    { id: 's21', employeeName: 'Trần Mai Ly', role: 'CASHIER', shift: 'MORNING', day: 'Chủ Nhật', status: 'CONFIRMED' },
-    { id: 's22', employeeName: 'Nguyễn Văn An', role: 'BARISTA', shift: 'MORNING', day: 'Chủ Nhật', status: 'CONFIRMED' },
-  ]);
-
-  const [formData, setFormData] = useState({
-    employeeName: 'Trần Mai Ly',
-    role: 'CASHIER' as ScheduleEntry['role'],
-    shift: 'MORNING' as ScheduleEntry['shift'],
-    day: 'Thứ 2' as ScheduleEntry['day'],
-  });
-
-  const days: ScheduleEntry['day'][] = ['Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7', 'Chủ Nhật'];
-
-  const handleAddSchedule = (e: React.FormEvent) => {
+  const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
-    const newEntry: ScheduleEntry = {
-      id: `s-${Date.now()}`,
-      employeeName: formData.employeeName,
-      role: formData.role,
-      shift: formData.shift,
-      day: formData.day,
-      status: 'CONFIRMED'
-    };
-    setSchedules([...schedules, newEntry]);
-    setIsModalOpen(false);
-    onShowToast?.(`Đã xếp ca cho ${formData.employeeName} vào ${formData.day}!`);
+    if (!form) return;
+    if (db.work_schedules.some(s => s.user_id === form.user_id && s.work_date === form.work_date && s.shift_name === form.shift_name)) {
+      onShowToast?.('Nhân viên đã có ca này trong ngày (uq_user_work_shift).');
+      return;
+    }
+    transact(tx =>
+      tx.insert('work_schedules', {
+        user_id: form.user_id,
+        work_date: form.work_date,
+        shift_name: form.shift_name,
+        check_in_time: null,
+        check_out_time: null,
+        starting_cash: null,
+        ending_cash_system: null,
+        ending_cash_actual: null,
+        status: 'SCHEDULED',
+        note: form.note.trim() || null
+      })
+    );
+    onShowToast?.(`Đã xếp ${SHIFT_LABEL[form.shift_name]} ngày ${fmtDate(form.work_date)} cho ${userName(db, form.user_id)}.`);
+    setForm(null);
   };
 
-  const getRoleBadge = (role: ScheduleEntry['role']) => {
-    switch (role) {
-      case 'CASHIER': return 'bg-amber-100 text-amber-800 border-amber-200';
-      case 'BARISTA': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'SHIPPER': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-      case 'MANAGER': return 'bg-purple-100 text-purple-800 border-purple-200';
+  const handleRemove = (s: WorkSchedule) => {
+    if (s.status !== 'SCHEDULED') {
+      onShowToast?.('Chỉ xóa được ca chưa bắt đầu (SCHEDULED).');
+      return;
     }
+    if (!confirm(`Xóa ca của ${userName(db, s.user_id)}?`)) return;
+    transact(tx => tx.remove('work_schedules', s.id));
   };
 
   return (
-    <div className="min-h-screen bg-stone-50 flex flex-col lg:flex-row pb-12">
-      <AdminSidebar currentRoute="admin-schedules" onNavigate={onNavigate} onShowToast={onShowToast} />
-
-      <main className="flex-1 p-4 sm:p-6 space-y-4 max-w-7xl relative">
-        {/* Header Block */}
-        <div className="bg-white p-5 rounded-2xl border border-stone-200 shadow-2xs space-y-3">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-2 text-xs text-stone-500 font-medium">
-                <span className="text-primary font-bold">Screen 25</span>
-                <span>•</span>
-                <span>Nhân Sự & Ca Làm</span>
-              </div>
-              <h1 className="text-xl sm:text-2xl font-bold text-stone-900 tracking-tight mt-1">
-                Lịch phân ca nhân viên (Employee Schedule Screen)
-              </h1>
-              <p className="text-xs text-stone-500">
-                Lập kế hoạch phân bổ ca làm cho Thu ngân, Barista và Tài xế giao hàng toàn chuỗi Aura Café.
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              <select
-                value={week}
-                onChange={(e) => setWeek(e.target.value)}
-                className="px-3 py-2 bg-stone-50 border border-stone-200 rounded-xl text-xs font-semibold text-stone-700 outline-none focus:border-primary"
-              >
-                <option value="Tuần 43 (20/10 - 26/10/2026)">Tuần 43 (20/10 - 26/10/2026)</option>
-                <option value="Tuần 44 (27/10 - 02/11/2026)">Tuần 44 (27/10 - 02/11/2026)</option>
-              </select>
-
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl flex items-center gap-2 hover:bg-amber-600 transition-colors shadow-xs"
-              >
-                <span className="material-symbols-outlined text-[18px]">calendar_add_on</span>
-                Phân ca mới (+)
-              </button>
-            </div>
+    <AdminLayout
+      route="admin-schedules"
+      onNavigate={onNavigate}
+      onShowToast={onShowToast}
+      table="work_schedules"
+      title="Lịch phân ca nhân viên"
+      subtitle={`Tuần ${fmtDate(days[0])} - ${fmtDate(days[6])}`}
+      actions={
+        <>
+          <GhostButton icon="chevron_left" onClick={() => setWeekStart(addDays(weekStart, -7))}>
+            Tuần trước
+          </GhostButton>
+          <GhostButton icon="chevron_right" onClick={() => setWeekStart(addDays(weekStart, 7))}>
+            Tuần sau
+          </GhostButton>
+          <PrimaryButton icon="calendar_add_on" onClick={() => openCreate()}>
+            Phân ca mới
+          </PrimaryButton>
+        </>
+      }
+    >
+      <div className="bg-white rounded-2xl border border-stone-200 shadow-2xs overflow-hidden">
+        <div className="p-4 border-b border-stone-100 flex flex-wrap gap-3 justify-between items-center bg-stone-50/50 text-[11px] font-bold">
+          <span className="text-sm text-stone-800">Bảng xếp lịch tuần theo ca</span>
+          <div className="flex items-center gap-3">
+            {(Object.keys(POSITION_LABEL) as StaffPosition[]).map(p => (
+              <span key={p} className={`px-2 py-0.5 rounded border ${POSITION_STYLE[p]}`}>{POSITION_LABEL[p]}</span>
+            ))}
           </div>
         </div>
-
-        {/* Weekly Calendar Grid */}
-        <div className="bg-white rounded-2xl border border-stone-200 shadow-2xs overflow-hidden">
-          <div className="p-4 border-b border-stone-100 flex justify-between items-center bg-stone-50/50">
-            <h2 className="font-bold text-sm text-stone-800 flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[18px]">calendar_month</span>
-              Bảng xếp lịch tuần theo ca
-            </h2>
-            <div className="flex items-center gap-3 text-[11px] font-bold">
-              <span className="flex items-center gap-1 text-amber-800"><span className="w-2 h-2 rounded-full bg-amber-500" />Thu ngân (Cashier)</span>
-              <span className="flex items-center gap-1 text-blue-800"><span className="w-2 h-2 rounded-full bg-blue-500" />Barista</span>
-              <span className="flex items-center gap-1 text-emerald-800"><span className="w-2 h-2 rounded-full bg-emerald-500" />Shipper</span>
-            </div>
+        <div className="overflow-x-auto">
+          <div className="grid grid-cols-7 min-w-[980px] border-b border-stone-200 text-center text-xs">
+            {days.map((d, i) => (
+              <div key={d} className="p-3 bg-stone-100/70 border-r border-stone-200 last:border-r-0 font-bold text-stone-800">
+                {DAY_LABELS[i]}
+                <span className="block text-[10px] font-normal text-stone-500">{fmtDate(d)}</span>
+              </div>
+            ))}
           </div>
-
-          <div className="overflow-x-auto">
-            <div className="grid grid-cols-7 min-w-[900px] border-b border-stone-200 text-center text-xs">
-              {days.map(d => (
-                <div key={d} className="p-3 bg-stone-100/70 border-r border-stone-200 last:border-r-0 font-bold text-stone-800">
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7 min-w-[900px] divide-x divide-stone-200 text-xs min-h-[420px]">
-              {days.map(day => {
-                const daySchedules = schedules.filter(s => s.day === day);
-                return (
-                  <div key={day} className="p-2 space-y-2 bg-stone-50/30">
-                    {/* Shift sections in a day */}
-                    {(['MORNING', 'AFTERNOON', 'EVENING'] as const).map(shiftName => {
-                      const shiftItems = daySchedules.filter(s => s.shift === shiftName);
-                      return (
-                        <div key={shiftName} className="space-y-1">
-                          <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">
-                            {shiftName === 'MORNING' ? 'Sáng (07h-12h)' : shiftName === 'AFTERNOON' ? 'Chiều (12h-17h)' : 'Tối (17h-22h)'}
-                          </span>
-                          {shiftItems.length === 0 ? (
-                            <div className="p-1.5 rounded-lg border border-dashed border-stone-200 text-stone-400 text-[10px] text-center">
-                              Trống ca
-                            </div>
-                          ) : (
-                            shiftItems.map(item => (
-                              <div
-                                key={item.id}
-                                className={`p-2 rounded-xl border shadow-3xs flex flex-col gap-0.5 text-left ${getRoleBadge(item.role)}`}
-                              >
-                                <strong className="text-xs truncate">{item.employeeName}</strong>
-                                <span className="text-[9px] uppercase font-bold tracking-wider opacity-80">{item.role}</span>
+          <div className="grid grid-cols-7 min-w-[980px] divide-x divide-stone-200 text-xs min-h-[420px]">
+            {days.map(day => (
+              <div key={day} className="p-2 space-y-2 bg-stone-50/30">
+                {SHIFTS.map(shift => {
+                  const items = db.work_schedules.filter(s => s.work_date === day && s.shift_name === shift);
+                  return (
+                    <div key={shift} className="space-y-1">
+                      <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">
+                        {SHIFT_LABEL[shift]} ({shiftTimeRange(db, shift)})
+                      </span>
+                      {items.length === 0 ? (
+                        <button
+                          onClick={() => openCreate(day, shift)}
+                          className="w-full p-1.5 rounded-lg border border-dashed border-stone-200 text-stone-400 text-[10px] hover:border-primary hover:text-primary"
+                        >
+                          + Xếp ca
+                        </button>
+                      ) : (
+                        items.map(s => {
+                          const u = db.users.find(x => x.id === s.user_id);
+                          return (
+                            <div
+                              key={s.id}
+                              className={`p-2 rounded-xl border flex flex-col gap-0.5 text-left ${u?.position ? POSITION_STYLE[u.position] : 'bg-stone-100 border-stone-200'}`}
+                            >
+                              <div className="flex items-start justify-between gap-1">
+                                <strong className="text-xs truncate">{u?.full_name}</strong>
+                                {s.status === 'SCHEDULED' && (
+                                  <button onClick={() => handleRemove(s)} className="opacity-60 hover:opacity-100" title="Xóa ca">
+                                    <span className="material-symbols-outlined text-[14px]">close</span>
+                                  </button>
+                                )}
                               </div>
-                            ))
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
+                              <span className="text-[9px] uppercase font-bold tracking-wider opacity-80">
+                                {u?.position ? POSITION_LABEL[u.position] : ''} • {SCHEDULE_STATUS_LABEL[s.status]}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
           </div>
         </div>
+      </div>
 
-        {/* Modal Phân ca mới */}
-        {isModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-            <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-stone-200 animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex justify-between items-center pb-2 border-b border-stone-100">
-                <h3 className="font-bold text-base text-stone-900">Phân ca làm việc mới cho nhân viên</h3>
-                <button onClick={() => setIsModalOpen(false)} className="text-stone-400 hover:text-stone-700 p-1">✕</button>
-              </div>
-
-              <form onSubmit={handleAddSchedule} className="space-y-3 text-xs">
-                <div>
-                  <label className="font-bold text-stone-700 block mb-1">Chọn nhân viên</label>
-                  <select
-                    value={formData.employeeName}
-                    onChange={(e) => setFormData({ ...formData, employeeName: e.target.value })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-xl outline-none focus:border-primary"
-                  >
-                    <option value="Trần Mai Ly">Trần Mai Ly (Thu ngân)</option>
-                    <option value="Nguyễn Văn An">Nguyễn Văn An (Barista)</option>
-                    <option value="Đỗ Văn Hùng">Đỗ Văn Hùng (Shipper)</option>
-                    <option value="Lê Thu Trang">Lê Thu Trang (Thu ngân)</option>
-                    <option value="Phạm Quang Huy">Phạm Quang Huy (Barista)</option>
-                    <option value="Hoàng Kim">Hoàng Kim (Quản lý)</option>
-                  </select>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="font-bold text-stone-700 block mb-1">Vị trí đảm nhận</label>
-                    <select
-                      value={formData.role}
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-stone-300 rounded-xl outline-none focus:border-primary"
-                    >
-                      <option value="CASHIER">Thu ngân (Cashier)</option>
-                      <option value="BARISTA">Barista (Pha chế)</option>
-                      <option value="SHIPPER">Shipper (Giao hàng)</option>
-                      <option value="MANAGER">Quản lý (Manager)</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="font-bold text-stone-700 block mb-1">Ca làm việc</label>
-                    <select
-                      value={formData.shift}
-                      onChange={(e) => setFormData({ ...formData, shift: e.target.value as any })}
-                      className="w-full px-3 py-2 border border-stone-300 rounded-xl outline-none focus:border-primary"
-                    >
-                      <option value="MORNING">Ca Sáng (07:00 - 12:00)</option>
-                      <option value="AFTERNOON">Ca Chiều (12:00 - 17:00)</option>
-                      <option value="EVENING">Ca Tối (17:00 - 22:00)</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="font-bold text-stone-700 block mb-1">Ngày làm việc</label>
-                  <select
-                    value={formData.day}
-                    onChange={(e) => setFormData({ ...formData, day: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-stone-300 rounded-xl outline-none focus:border-primary"
-                  >
-                    {days.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                </div>
-
-                <div className="pt-3 border-t border-stone-100 flex justify-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-semibold"
-                  >
-                    Hủy
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 rounded-xl bg-primary hover:bg-amber-600 text-white font-bold"
-                  >
-                    Lưu phân ca
-                  </button>
-                </div>
-              </form>
+      {form && (
+        <Modal title="Phân ca làm việc" onClose={() => setForm(null)}>
+          <form onSubmit={handleAdd} className="space-y-3">
+            <Field label="Nhân viên" column="user_id">
+              <select value={form.user_id} onChange={e => setForm({ ...form, user_id: Number(e.target.value) })} className={inputCls}>
+                {staff.map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.full_name} ({u.position ? POSITION_LABEL[u.position] : 'Nhân viên'})
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Ngày làm" column="work_date">
+                <input type="date" required value={form.work_date} onChange={e => setForm({ ...form, work_date: e.target.value })} className={inputCls} />
+              </Field>
+              <Field label="Ca" column="shift_name">
+                <select value={form.shift_name} onChange={e => setForm({ ...form, shift_name: e.target.value as ShiftName })} className={inputCls}>
+                  {SHIFTS.map(s => (
+                    <option key={s} value={s}>
+                      {SHIFT_LABEL[s]} ({shiftTimeRange(db, s)})
+                    </option>
+                  ))}
+                </select>
+              </Field>
             </div>
-          </div>
-        )}
-      </main>
-    </div>
+            <Field label="Ghi chú" column="note">
+              <input value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} className={inputCls} />
+            </Field>
+            <FormActions onCancel={() => setForm(null)} submitLabel="Lưu phân ca" />
+          </form>
+        </Modal>
+      )}
+    </AdminLayout>
   );
 };
