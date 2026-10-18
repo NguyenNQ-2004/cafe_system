@@ -1,5 +1,6 @@
 import type {
   DbState,
+  Ingredient,
   InventoryRefType,
   InventoryTxType,
   Order,
@@ -339,6 +340,44 @@ export const productCost = (db: DbState, productId: number): number | null => {
 };
 
 export const isLowStock = (i: { current_stock: number; min_stock_level: number }) => i.current_stock <= i.min_stock_level;
+
+// =====================================================
+// Kho: số phần còn làm được của từng món (tính từ tồn kho + định mức, không lưu DB)
+// - Số phần = min( floor(current_stock / quantity_required) ) trên mọi nguyên liệu trong công thức
+// - placeOrder đã trừ kho ngay khi tạo đơn, nên đây là số phần còn nhận thêm được ngoài các đơn đang chờ
+// - Định mức không phân biệt size: size L dùng cùng lượng như size M
+// =====================================================
+
+// Từ ngưỡng này trở xuống thì báo "sắp hết" trên màn barista
+export const SERVINGS_WARNING = 10;
+
+export interface ServingsLeft {
+  productId: number;
+  name: string;
+  servings: number | null; // null = món chưa có công thức nên không tính được
+  limiting: { ingredient: Ingredient; perServing: number } | null; // nguyên liệu hết sớm nhất
+}
+
+export const servingsLeft = (db: DbState, productId: number): ServingsLeft => {
+  const name = db.products.find(p => p.id === productId)?.name ?? '';
+  const bom = db.product_ingredients.filter(b => b.product_id === productId);
+  if (bom.length === 0) return { productId, name, servings: null, limiting: null };
+  let best: ServingsLeft = { productId, name, servings: Infinity, limiting: null };
+  for (const b of bom) {
+    const ing = db.ingredients.find(i => i.id === b.ingredient_id);
+    // Cộng 1e-9 để 0.3 / 0.1 không bị làm tròn xuống 2 do sai số số thực
+    const n = ing ? Math.max(0, Math.floor(ing.current_stock / b.quantity_required + 1e-9)) : 0;
+    if (n < best.servings!) best = { productId, name, servings: n, limiting: ing ? { ingredient: ing, perServing: b.quantity_required } : null };
+  }
+  return best;
+};
+
+// Các món đang bán, món ít phần nhất lên đầu, món chưa có công thức xuống cuối
+export const servingsBoard = (db: DbState) =>
+  db.products
+    .filter(p => p.is_available)
+    .map(p => servingsLeft(db, p.id))
+    .sort((a, b) => (a.servings ?? Infinity) - (b.servings ?? Infinity) || a.name.localeCompare(b.name));
 
 export const poCode = (id: number) => `PO-${String(id).padStart(4, '0')}`;
 

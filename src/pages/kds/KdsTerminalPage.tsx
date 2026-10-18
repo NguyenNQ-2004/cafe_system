@@ -2,7 +2,17 @@ import React, { useMemo, useState } from 'react';
 import { PageRoute, Order, OrderItem } from '../../types';
 import { KdsHeader } from './KdsHeader';
 import { useDb } from '../../data/DbContext';
-import { ORDER_STATUS_LABEL, ORDER_TYPE_LABEL, customizationTags, describeCustomization, fmtTime, orderCustomerName } from '../../data/dbUtils';
+import {
+  ORDER_STATUS_LABEL,
+  ORDER_TYPE_LABEL,
+  SERVINGS_WARNING,
+  customizationTags,
+  describeCustomization,
+  fmtNumber,
+  fmtTime,
+  orderCustomerName,
+  servingsBoard
+} from '../../data/dbUtils';
 
 interface KdsTerminalPageProps {
   onNavigate: (route: PageRoute) => void;
@@ -24,6 +34,7 @@ export const KdsTerminalPage: React.FC<KdsTerminalPageProps> = ({ onNavigate, on
   const { db, transact, setOrderStatus } = useDb();
   const [viewMode, setViewMode] = useState<'by-order' | 'by-item'>('by-order');
   const [isBatchPanelCollapsed, setIsBatchPanelCollapsed] = useState(false);
+  const [isServingsCollapsed, setIsServingsCollapsed] = useState(false);
   const [batchSelected, setBatchSelected] = useState<Set<number>>(new Set()); // order_items.id
 
   const itemsOf = (orderId: number) => db.order_items.filter(i => i.order_id === orderId);
@@ -170,6 +181,11 @@ export const KdsTerminalPage: React.FC<KdsTerminalPageProps> = ({ onNavigate, on
 
   const pendingItems = activeOrders.flatMap(o => itemsOf(o.id)).filter(i => !i.is_prepared);
 
+  // ---------- Còn pha được: tính lại mỗi khi tồn kho / công thức / món thay đổi ----------
+  const servings = useMemo(() => servingsBoard(db), [db.products, db.product_ingredients, db.ingredients]);
+  const outCount = servings.filter(s => s.servings === 0).length;
+  const lowCount = servings.filter(s => s.servings !== null && s.servings > 0 && s.servings <= SERVINGS_WARNING).length;
+
   const renderBatchLine = (line: { item: OrderItem; order: Order }) => {
     const isSelected = batchSelected.has(line.item.id);
     return (
@@ -266,6 +282,62 @@ export const KdsTerminalPage: React.FC<KdsTerminalPageProps> = ({ onNavigate, on
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Còn pha được: ingredients.current_stock / product_ingredients.quantity_required */}
+      <div className="bg-white border-b border-stone-200 px-4 sm:px-6 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex flex-wrap items-center gap-2 min-w-0">
+            <span className="material-symbols-outlined text-[20px] text-primary">inventory_2</span>
+            <h3 className="font-bold text-sm text-stone-900">Còn pha được</h3>
+            <span className="hidden sm:inline text-[11px] text-stone-500">Theo tồn kho hiện tại, tự cập nhật khi có đơn mới hoặc nhập kho</span>
+            {outCount > 0 && <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-bold">{outCount} món hết</span>}
+            {lowCount > 0 && (
+              <span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-bold">
+                {lowCount} món còn ≤ {SERVINGS_WARNING} phần
+              </span>
+            )}
+          </div>
+          <button
+            onClick={() => setIsServingsCollapsed(!isServingsCollapsed)}
+            className="h-7 px-2 rounded-lg text-stone-500 hover:text-stone-900 hover:bg-stone-100 flex items-center gap-1 text-[11px] font-semibold"
+          >
+            <span className="material-symbols-outlined text-[18px]">{isServingsCollapsed ? 'expand_more' : 'expand_less'}</span>
+            {isServingsCollapsed ? 'Mở rộng' : 'Thu gọn'}
+          </button>
+        </div>
+
+        {!isServingsCollapsed && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 mt-3">
+            {servings.map(s => {
+              const tone =
+                s.servings === null
+                  ? 'border-stone-200 bg-stone-50 text-stone-400'
+                  : s.servings === 0
+                    ? 'border-rose-200 bg-rose-50 text-rose-700'
+                    : s.servings <= SERVINGS_WARNING
+                      ? 'border-amber-200 bg-amber-50 text-amber-800'
+                      : 'border-stone-200 bg-white text-stone-900';
+              const detail =
+                s.servings === null
+                  ? 'Chưa có công thức'
+                  : s.limiting
+                    ? `Giới hạn bởi ${s.limiting.ingredient.name}: còn ${fmtNumber(s.limiting.ingredient.current_stock)} ${s.limiting.ingredient.unit}, ${fmtNumber(s.limiting.perServing)} ${s.limiting.ingredient.unit}/phần`
+                    : 'Thiếu nguyên liệu trong kho';
+              return (
+                <div key={s.productId} className={`rounded-xl border px-3 py-2 ${tone}`} title={detail}>
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-[11px] font-semibold text-stone-700 leading-tight line-clamp-2">{s.name}</p>
+                    <span className="font-mono font-bold text-lg leading-none shrink-0">
+                      {s.servings === null ? '—' : s.servings === 0 ? 'Hết' : fmtNumber(s.servings)}
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-stone-500 mt-1 truncate">{detail}</p>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       <div className="p-4 sm:p-6 w-full flex-1">
